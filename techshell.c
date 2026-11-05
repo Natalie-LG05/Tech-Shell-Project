@@ -35,7 +35,8 @@ int main() // MAIN
         displayPrompt(curDir);
 
         input = getInput();
-        printf("%s\n", input);
+        printf("%p\n", &input);
+        // printf("%s\n", input);
 
         // struct ShellCommand command = parseInput(input);
         //
