@@ -35,8 +35,7 @@ int main() // MAIN
         displayPrompt(curDir);
 
         input = getInput();
-        printf("%p\n", input);
-        // printf("%s\n", input);
+        printf("%s\n", input);
 
         // struct ShellCommand command = parseInput(input);
         //
@@ -58,7 +57,8 @@ void displayPrompt(char* curDir) {
 
 char* getInput() {
     char* input = NULL;
-    getline(&input, NULL, stdin);
+    size_t size = 0;
+    ssize_t charsRead = getline(&input, NULL, stdin);  // use this if I end up needing error handling
     return input;
 }
 
