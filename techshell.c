@@ -40,8 +40,6 @@ int main() // MAIN
         // struct ShellCommand command = parseInput(input);
         //
         // isRunning = executeCommand(command);
-
-        break;
     }
 
     free(curDir);
