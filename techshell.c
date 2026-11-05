@@ -24,6 +24,8 @@ char* getInput();
 
 int main() // MAIN
 {
+    printf("Hello World!");
+
     char* curDir = NULL;
     bool isRunning = true;
 
