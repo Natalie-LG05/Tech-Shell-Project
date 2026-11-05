@@ -58,7 +58,7 @@ void displayPrompt(char* curDir) {
 char* getInput() {
     char* input = NULL;
     size_t size = 0;
-    ssize_t charsRead = getline(&input, NULL, stdin);  // use this if I end up needing error handling
+    ssize_t charsRead = getline(&input, &size, stdin);  // use this if I end up needing error handling
     return input;
 }
 
