@@ -34,7 +34,7 @@ int main() // MAIN
         curDir = getcwd(NULL, 0);
         displayPrompt(curDir);
 
-        // input = getInput();
+        input = getInput();
         // printf("%s\n", input);
 
         // struct ShellCommand command = parseInput(input);
