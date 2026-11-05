@@ -55,11 +55,11 @@ void displayPrompt(char* curDir) {
     printf("%s$ ", curDir);
 }
 
-// char* getInput() {
-//     char* input = NULL;
-//     getline(&input, NULL, stdin);
-//     return input;
-// }
+char* getInput() {
+    char* input = NULL;
+    getline(&input, NULL, stdin);
+    return input;
+}
 
 /*
     A function that parses through the user input.
