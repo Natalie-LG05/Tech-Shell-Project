@@ -31,6 +31,7 @@ int main() // MAIN
     while (isRunning) {
         curDir = getcwd(NULL, 0);
         displayPrompt(curDir);
+        break;
 
         // char *input = getInput();
         //
