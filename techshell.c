@@ -17,15 +17,13 @@ struct ShellCommand {
 
 // Functional Prototypes
 void displayPrompt(char* curDir);
-char* getInput();
+// char* getInput();
 // struct ShellCommand parseInput(char* input);
 // bool executeCommand(struct ShellCommand command);
 
 
 int main() // MAIN
 {
-    printf("Hello World!");
-
     char* curDir = NULL;
     bool isRunning = true;
 
@@ -36,8 +34,8 @@ int main() // MAIN
         curDir = getcwd(NULL, 0);
         displayPrompt(curDir);
 
-        input = getInput();
-        printf("%s\n", input);
+        // input = getInput();
+        // printf("%s\n", input);
 
         // struct ShellCommand command = parseInput(input);
         //
@@ -55,11 +53,11 @@ void displayPrompt(char* curDir) {
     printf("%s$ ", curDir);
 }
 
-char* getInput() {
-    char* input = NULL;
-    getline(&input, NULL, stdin);
-    return input;
-}
+// char* getInput() {
+//     char* input = NULL;
+//     getline(&input, NULL, stdin);
+//     return input;
+// }
 
 /*
     A function that parses through the user input.
