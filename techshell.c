@@ -9,54 +9,56 @@
 #include <stdbool.h>
 
 
-struct ShellCommand {
+struct command {
     char* name;
+    char* destFilepath;
+    char* sourceFilepath;
+    struct command* destCommand;
     char* args[];
 };
 
 
 // Functional Prototypes
-void displayPrompt(char* curDir);
-char* getInput();
-// struct ShellCommand parseInput(char* input);
-// bool executeCommand(struct ShellCommand command);
+static void display_prompt(char* cur_dir);
+static char* get_input();
+static struct command parse_input(char* input);
+// static bool execute_command(struct ShellCommand command);
 
 
 int main() // MAIN
 {
-    char* curDir = NULL;
-    bool isRunning = true;
+    char* cur_dir = NULL;
+    bool is_running = true;
 
     char* input = NULL;
 
     // repeatedly prompt the user for input
-    while (isRunning) {
-        curDir = getcwd(NULL, 0);
-        displayPrompt(curDir);
+    while (is_running) {
+        cur_dir = getcwd(NULL, 0);
+        display_prompt(cur_dir);
 
-        input = getInput();
-        printf("%s\n", input);
+        input = get_input();
 
-        // struct ShellCommand command = parseInput(input);
-        //
-        // isRunning = executeCommand(command);
+        struct command command = parse_input(input);
+
+        // is_running = execute_command(command);
     }
 
-    free(curDir);
+    free(cur_dir);
     free(input);
 
     exit(0);
 }
 
 
-void displayPrompt(char* curDir) {
-    printf("%s$ ", curDir);
+static void display_prompt(char* cur_dir) {
+    printf("%s$ ", cur_dir);
 }
 
-char* getInput() {
+static char* get_input() {
     char* input = NULL;
     size_t size = 0;
-    ssize_t charsRead = getline(&input, &size, stdin);  // use this if I end up needing error handling
+    ssize_t chars_read = getline(&input, &size, stdin);  // use this if I end up needing error handling
     return input;
 }
 
@@ -79,9 +81,28 @@ char* getInput() {
     Be sure to consider/test for situations when a backslash is used to escape the space char
     and when quotes are used to group together various tokens.
 */
-// struct ShellCommand parseInput(char* input) {
-//
-// }
+static struct command parse_input(char* input) {
+    struct command cmd = {};  // initialize the command to default "zero" values
+
+    // copy the string to avoid changing the provided string
+    char* input_search_string = calloc(strlen(input) + 1, sizeof(char));
+    strcpy(input, input_search_string);
+
+    char* deliminators = " <>|\"\\";  // stop when reaching any of these characters
+    while (*input_search_string != '\0') {  // loop until reaching the end of the original input
+        char *delim_loc = strpbrk(input_search_string, deliminators);  // find the next delim char
+        char delim = *delim_loc;  // save what character we stopped at
+
+        *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
+        printf("Token: %s\tDelim: %c\n", input_search_string, delim);
+
+        input_search_string = delim_loc + 1;  // move to after the char we stopped at
+    }
+
+    free(input_search_string);  // free allocated memory to avoid memory leaks
+
+    return cmd;
+}
 
 /*
     A function that executes the command.
@@ -102,6 +123,6 @@ char* getInput() {
         That is, there symbols: > and <.
         Pipe isn't required but could be a nice addition.
 */
-// bool executeCommand(struct ShellCommand command) {
+// static bool execute_command(struct ShellCommand command) {
 //
 // }
