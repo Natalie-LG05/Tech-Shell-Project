@@ -17,9 +17,9 @@ struct ShellCommand {
 
 // Functional Prototypes
 void displayPrompt(char* curDir);
-char* getInput();
-struct ShellCommand parseInput(char* input);
-bool executeCommand(struct ShellCommand command);
+// char* getInput();
+// struct ShellCommand parseInput(char* input);
+// bool executeCommand(struct ShellCommand command);
 
 
 int main() // MAIN
@@ -32,11 +32,11 @@ int main() // MAIN
         curDir = getcwd(NULL, 0);
         displayPrompt(curDir);
 
-        char *input = getInput();
-
-        struct ShellCommand command = parseInput(input);
-
-        isRunning = executeCommand(command);
+        // char *input = getInput();
+        //
+        // struct ShellCommand command = parseInput(input);
+        //
+        // isRunning = executeCommand(command);
     }
 
     free(curDir);
@@ -48,9 +48,9 @@ void displayPrompt(char* curDir) {
     printf("%s$ ", curDir);
 }
 
-char* getInput() {
-
-}
+// char* getInput() {
+//
+// }
 
 /*
     A function that parses through the user input.
@@ -71,9 +71,9 @@ char* getInput() {
     Be sure to consider/test for situations when a backslash is used to escape the space char
     and when quotes are used to group together various tokens.
 */
-struct ShellCommand parseInput(char* input) {
-
-}
+// struct ShellCommand parseInput(char* input) {
+//
+// }
 
 /*
     A function that executes the command.
@@ -94,6 +94,6 @@ struct ShellCommand parseInput(char* input) {
         That is, there symbols: > and <.
         Pipe isn't required but could be a nice addition.
 */
-bool executeCommand(struct ShellCommand command) {
-
-}
+// bool executeCommand(struct ShellCommand command) {
+//
+// }
