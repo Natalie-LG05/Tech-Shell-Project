@@ -55,6 +55,7 @@ void displayPrompt(char* curDir) {
 
 char* getInput() {
     char* input = NULL;
+    printf("getting input!");
     getline(&input, NULL, stdin);
     return input;
 }
