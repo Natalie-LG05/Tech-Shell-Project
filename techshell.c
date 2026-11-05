@@ -17,7 +17,7 @@ struct ShellCommand {
 
 // Functional Prototypes
 void displayPrompt(char* curDir);
-// char* getInput();
+char* getInput();
 // struct ShellCommand parseInput(char* input);
 // bool executeCommand(struct ShellCommand command);
 
