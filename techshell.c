@@ -2,20 +2,55 @@
 // Description: TechShell project
 
 
-//////// Some function ideas: ////////////
-// Note: Some code is reflected in main that represents these functions,
-// but it is up to you to determine how you want to organize your code.
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdbool.h>
 
-/*
-    A function that causes the prompt to
-    display in the terminal
-*/
 
-/*
-    A function that takes input from the user.
-    It may return return the input to the calling statement or
-    store it at some memory location using a pointer.
-*/
+struct ShellCommand {
+    char* name;
+    char* args[];
+};
+
+
+// Functional Prototypes
+void displayPrompt(char* curDir);
+char* getInput();
+struct ShellCommand parseInput(char* input);
+bool executeCommand(struct ShellCommand command);
+
+
+int main() // MAIN
+{
+    char* curDir = NULL;
+    bool isRunning = true;
+
+    // repeatedly prompt the user for input
+    while (isRunning) {
+        curDir = getcwd(NULL, 0);
+        displayPrompt(curDir);
+
+        char *input = getInput();
+
+        struct ShellCommand command = parseInput(input);
+
+        isRunning = executeCommand(command);
+    }
+
+    free(curDir);
+    exit(0);
+}
+
+
+void displayPrompt(char* curDir) {
+    printf("%s$ ", curDir);
+}
+
+char* getInput() {
+
+}
 
 /*
     A function that parses through the user input.
@@ -36,6 +71,9 @@
     Be sure to consider/test for situations when a backslash is used to escape the space char
     and when quotes are used to group together various tokens.
 */
+struct ShellCommand parseInput(char* input) {
+
+}
 
 /*
     A function that executes the command.
@@ -50,34 +88,12 @@
     2. The fork() function.
         This can create a process for execvp to take over.
     3. cd is not a command like ls and mkdir.
-        cd is a toold provided by the shell,
+        cd is a tool provided by the shell,
         so you WILL need to recreate the functionality of cd.
     4. Be sure to handle standard output redirect and standard input redirects here
         That is, there symbols: > and <.
         Pipe isn't required but could be a nice addition.
 */
+bool executeCommand(struct ShellCommand command) {
 
-
-int main() // MAIN
-{
-	char* input;
-	struct ShellCommand command;
-
-	// repeatedly prompt the user for input
-	for (;;)
-	{
-        // display the prompt
-        displayPrompt();
-
-	    // get the user's input
-	    input = getInput();
-
-	    // parse the command line
-	    command = parseInput(input);
-
-	    // execute the command
-	    executeCommand(command);
-	}
-
-	exit(0);
 }
