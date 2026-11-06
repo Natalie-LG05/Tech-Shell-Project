@@ -88,6 +88,11 @@ static void parse_input(char* input, struct shell_command* out) {
             char delim = *delim_loc;  // save what character we stopped at
 
             // if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
+            if (delim == '\\') {
+                memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
+                input_search_string = delim_loc + 1;
+                continue;
+            }
 
             // if delim is a ", then go until finding a \ or "
                 // if a \ is found, then remove the \, ignore the next char, and keep going to get the rest of the token
