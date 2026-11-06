@@ -86,11 +86,11 @@ static char* get_input() {
 static void parse_input(char* input, struct command* out) {
     struct command cmd = {};  // initialize the command to default "zero" values
 
+    printf("Searching input string: %s\n", input);
+
     // copy the string to avoid changing the provided string
     char* input_search_string = calloc(strlen(input) + 1, sizeof(char));
     strcpy(input, input_search_string);
-
-    printf("Searching input string: %s\n", input);
 
     const char* deliminators = " <>|\"\\";  // stop when reaching any of these characters
     while (*input_search_string != '\0') {  // loop until reaching the end of the original input
