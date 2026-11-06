@@ -76,107 +76,93 @@ static void parse_input(char* input, struct shell_command* out) {
     char* token = NULL;
     char* last_token = NULL;
     char last_delim = '\0';
+
+    bool in_quotes = false;
+
     while (true) {
         // skip over leading spaces to get to the start of the token
-        if (token == NULL) input_search_string += strspn(input_search_string, " ");
+        if (!in_quotes && token == NULL) input_search_string += strspn(input_search_string, " ");
         // if we reach the end of the string here, that means we had trailing spaces which should be ignored
         if (*input_search_string == '\0') {
             // do not break if token isn't NULL, as we still need to process the last token
             if (token == NULL) break;
+
+            if (in_quotes) {
+                // input ends and is missing a closing ", so give an error or something idk yet
+            }
         }
 
-        char *delim_loc = strpbrk(input_search_string, " <>|\"\\");  // find the next deliminator
+        const char* deliminators = in_quotes ? "\\\"" : " <>|\"\\";
+        char *delim_loc = strpbrk(input_search_string, deliminators);  // find the next delim char
 
         char delim = '\0';
         if (delim_loc != NULL) delim = *delim_loc;  // save what character we stopped at
 
-        // if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
         if (delim == '\\') {
-            // shift over the rest of the string, removing the '\'
-            memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
-            // store the start of this token in token (unless the start of a token is already being stored there)
-            if (token == NULL) token = input_search_string;
-            last_delim = '\\';
+            // outside quotes, if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
+            // inside quotes, if delim is a \, then only escape the following char if it is a \ or ", otherwise treat the \ as a literal '\'
+            char next_char = *(delim_loc + 1);
+            if (!in_quotes || (next_char == '"' || next_char == '\\')) {
+                // remove the \, ignore the next char (the escaped char), and keep going to get the rest of the token
+                // shift over the rest of the string, removing the '\'
+                memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
 
-            input_search_string = delim_loc + 1;  // continue reading the token
-        }
-        else if (delim == '"') {
-            // if we find a " in the first token or without a literal space before it, treat it as a literal "
-            // if the char be4 the " is \0, then this " must be the start of a token
-            if (last_token == NULL || *(delim_loc - 1) != '\0') {
-                // store the start of this token in token
+                // store the start of this token in token (unless the start of a token is already being stored there)
                 if (token == NULL) token = input_search_string;
-                last_delim = '"';
-                input_search_string = delim_loc + 1;  // continue reading the token
             }
-            else {
-                // if delim is a " and it is not in the middle of a token (i.e. it is the start of a token),
-                // go until finding a closing " to get the token
-                input_search_string = delim_loc + 1;  // move to after the char we stopped at
 
-                token = input_search_string;  // store where this token starts
-                while (true) {  // loop until finding the closing " in order to get this token
-                    delim_loc = strpbrk(input_search_string, "\\\"");
-                    if (delim_loc != NULL) {
-                        delim = *delim_loc;
-                        if (delim == '\\') {  // a / inside quotes is used to escape a \ or ", otherwise it is a literal '\'
-                            switch (*(delim_loc + 1)) {
-                                case '"':
-                                case '\\':
-                                    // remove the \, ignore the next char, and keep going to get the rest of the token
-                                    memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
-                                    input_search_string = delim_loc + 1;
-                                    break;
-                                default:
-                                    // if it isn't escaping a " or \, then just treat it as a literal \ and continue
-                                    input_search_string = delim_loc + 1;
-                            }
-                        } else {
-                            // we have found the closing " without a \ before it so everything between the "s is the token
-                            *delim_loc = '\0';  // change the closing " to a null terminator to make accessing the token simple
+            last_delim = '\\';
+            input_search_string = delim_loc + 1;  // continue reading the token
+            continue;
+        }
 
-                            printf("Token: '%s' (Delim: '%c')\n", token, delim);
-
-                            // update last_token and last_delim
-                            last_token = token;
-                            token = NULL;
-                            last_delim = delim;
-
-                            input_search_string = delim_loc + 1;
-                            break;
-                        }
-                    } else {
-                        // input is missing a closing ", so give an error or something idk yet
-                    }
+        if (delim == '"') {
+            if (!in_quotes) {
+                // if we find a " in the first token or that isn't the start of a token, treat it as a literal "
+                // if the char be4 the " is \0, then this " must be the start of a token
+                if (last_token == NULL || *(delim_loc - 1) != '\0') {
+                    // store the start of this token in token
+                    if (token == NULL) token = input_search_string;
+                    last_delim = '"';
+                    input_search_string = delim_loc + 1;  // continue reading the token
+                } else {
+                    // if delim is a " and it is not in the middle of a token (i.e. it is the start of a token),
+                    // go until finding a closing " to get the token
+                    in_quotes = true;  // set the parsing loop to run in quotes mode
+                    input_search_string = delim_loc + 1;  // move to after the opening "
+                    token = input_search_string;  // store where this token starts
                 }
+                continue;  // continue reading the token
             }
+
+            // we have found the closing " without a \ before it, so everything between the "s is the token
+            in_quotes = false;  // set the parsing loop to run in normal mode again
+        } else {
+            // if the delim is a >, set the next token as the dest_filepath
+            // if the delim is a <, set the next token as the source_filepath
+            // if the delim is a |, recursively call parse_input to set everything after the | as the dest_command
+
+            // if last_token is NULL, the token is the command name so set name
+            // otherwise the token will be an arg, filename, chained command, or redirect operator
+                // if the token is a >, ignore it and set the next token as the dest_filepath
+                // if the token is a <, ignore it and set the next token as the source_filepath
+                // if the token is a |, ignore it and recursively call parse_input to set everything after the | as the dest_command
+                // otherwise the token is an arg, filename, or chained command depending on the previous token and delim
         }
-        else {
-            if (token == NULL) token = input_search_string;
 
-            // for testing, simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
-            if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
-            printf("Token: '%s' (Delim: '%c')\n", token, delim);
+        // if a token isn't already set, then everything from where we started up to the delim is the token
+        if (token == NULL) token = input_search_string;
+        if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
 
-            // update last_token and last_delim
-            last_token = token;
-            token = NULL;
-            last_delim = delim;
+        printf("Token: '%s' (Delim: '%c')\n", token, delim);  // process the token
 
-            if (delim_loc == NULL) break;  // no more delim chars, so the remainder of the string was the final token so we are done
-            input_search_string = delim_loc + 1;  // move to after the char we stopped at
-        }
+        // update last_token and last_delim
+        last_token = token;
+        token = NULL;  // indicate that we are no longer processing a token
+        last_delim = delim;
 
-        // if the delim is a >, set the next token as the dest_filepath
-        // if the delim is a <, set the next token as the source_filepath
-        // if the delim is a |, recursively call parse_input to set everything after the | as the dest_command
-
-        // if last_token is NULL, the token is the command name so set name
-        // otherwise the token will be an arg, filename, chained command, or redirect operator
-            // if the token is a >, ignore it and set the next token as the dest_filepath
-            // if the token is a <, ignore it and set the next token as the source_filepath
-            // if the token is a |, ignore it and recursively call parse_input to set everything after the | as the dest_command
-            // otherwise the token is an arg, filename, or chained command depending on the previous token and delim
+        if (delim_loc == NULL) break;  // no more delim chars, so the remainder of the string was the final token so we are done
+        input_search_string = delim_loc + 1;  // move to after the char we stopped at
     }
 
     free(input_string);  // free allocated memory to avoid memory leaks
