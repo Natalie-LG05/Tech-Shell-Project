@@ -9,11 +9,11 @@
 #include <stdbool.h>
 
 
-struct command {
+struct shell_command {
     char* name;
-    char* destFilepath;
-    char* sourceFilepath;
-    struct command* destCommand;
+    char* dest_filepath;
+    char* source_filepath;
+    struct shell_command* dest_command;
     char* args[];
 };
 
@@ -21,8 +21,8 @@ struct command {
 // Functional Prototypes
 static void display_prompt(char* cur_dir);
 static char* get_input();
-static void parse_input(char* input, struct command* out);
-// static bool execute_command(struct ShellCommand command);
+static void parse_input(char* input, struct shell_command* out);
+static void execute_command(struct shell_command command);
 
 
 int main() // MAIN
@@ -39,10 +39,10 @@ int main() // MAIN
 
         input = get_input();
 
-        struct command command = {};
+        struct shell_command command = {};
         parse_input(input, &command);
 
-        // is_running = execute_command(command);
+        execute_command(command);
     }
 
     free(cur_dir);
@@ -63,27 +63,8 @@ static char* get_input() {
     return input;
 }
 
-/*
-    A function that parses through the user input.
-    Consider having this function return a struct that stores vital
-    information about the parsed instruction such as:
-    - The command itself
-    - The arguments that come after the command
-        Hint: When formatting your data,
-        look into execvp and how it takes in args.
-    - Information about if a redirect was detected such as >, <, or |
-    - Information about whether or not a new file
-        needs to be created and what that filename may be.
-
-
-    Some helpful functions when doing this come from string.h and stdlib.h, such as
-    strtok, strcmp, strcpy, calloc, malloc, realloc, free, and more
-
-    Be sure to consider/test for situations when a backslash is used to escape the space char
-    and when quotes are used to group together various tokens.
-*/
-static void parse_input(char* input, struct command* out) {
-    struct command cmd = {};  // initialize the command to default "zero" values
+static void parse_input(char* input, struct shell_command* out) {
+    struct shell_command cmd = {};  // initialize the command to default "zero" values
 
     // copy the string to avoid changing the provided string
     char* input_string = calloc(strlen(input) + 1, sizeof(char));
@@ -92,6 +73,8 @@ static void parse_input(char* input, struct command* out) {
     char* input_search_string = input_string;
 
     const char* deliminators = " <>|\"\\";  // stop when reaching any of these characters
+    char* last_token = NULL;
+    char last_delim = '\0';
     while (1) {
         // skip over leading spaces to get to the start of the token
         input_search_string += strspn(input_search_string, " ");
@@ -103,9 +86,28 @@ static void parse_input(char* input, struct command* out) {
         if (delim_loc != NULL) {
             char delim = *delim_loc;  // save what character we stopped at
 
-            *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
+            // if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
 
+            // if delim is a ", then go until finding a \ or "
+                // if a \ is found, then remove the \, ignore the next char, and keep going to get the rest of the token
+                // if another " is found (without a \ before it), then everything between the "s is the token
+
+            // if the delim is a >, set the next token as the dest_filepath
+            // if the delim is a <, set the next token as the source_filepath
+            // if the delim is a |, recursively call parse_input to set everything after the | as the dest_command
+
+            // if last_token is NULL, the token is the command name so set name
+            // otherwise the token will be an arg, filename, chained command, or redirect operator
+                // if the token is a >, ignore it and set the next token as the dest_filepath
+                // if the token is a <, ignore it and set the next token as the source_filepath
+                // if the token is a |, ignore it and recursively call parse_input to set everything after the | as the dest_command
+                // otherwise the token is an arg, filename, or chained command depending on the previous token and delim
+
+            // simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
+            *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
             printf("Token: '%s' (Delim: '%c')\n", input_search_string, delim);
+
+            // update last_token and last_delim if applicable
 
             input_search_string = delim_loc + 1;  // move to after the char we stopped at
         } else {
@@ -121,25 +123,21 @@ static void parse_input(char* input, struct command* out) {
     *out = cmd;
 }
 
-/*
-    A function that executes the command.
-    This function might take in a struct that represents the shell command.
+// test if `exit` command works
+static void execute_command(struct shell_command command) {
+    // fork() for a child to run execvp() in (unless the command is 'cd')
 
-    Be sure to consider each of the following:
-    1. The execvp() function.
-        This can execute commands that already exist, that is,
-        you don't need to recreate the functionality of
-        the commands on your computer, just the shell.
-        Keep in mind that execvp takes over the current process.
-    2. The fork() function.
-        This can create a process for execvp to take over.
-    3. cd is not a command like ls and mkdir.
-        cd is a tool provided by the shell,
-        so you WILL need to recreate the functionality of cd.
-    4. Be sure to handle standard output redirect and standard input redirects here
-        That is, there symbols: > and <.
-        Pipe isn't required but could be a nice addition.
-*/
-// static bool execute_command(struct ShellCommand command) {
-//
-// }
+    // open necessary source and destination file streams
+    // if there is a source command create a pipe to redirect the initial commands stdout into
+
+    // create the args array holding the name of the command, the args to the command,
+    // file data that was redirected into the command, and NULL to terminate the array
+
+    // if the command is 'cd', manually perform it instead of using execvp()
+    // otherwise, in the child process:-
+        // if applicable, redirect stdout into the pipe or the destination file
+        // call on execvp, passing in the args array
+
+    // if there was a dest_command, the pipe will have the output of the initial command, so update the dest_command's
+    // args with that output then recursively call on execute_command with the new command
+}
