@@ -94,8 +94,8 @@ static void parse_input(char* input, struct shell_command* out) {
         if (delim == '\\') {
             // shift over the rest of the string, removing the '\'
             memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
-            // store the start of this token in token (unless another \ or " delim is already storing something there)
-            if (last_delim != '\\' && last_delim != '"') token = input_search_string;
+            // store the start of this token in token (unless the start of a token is already being stored there)
+            if (token == NULL) token = input_search_string;
             last_delim = '\\';
 
             input_search_string = delim_loc + 1;  // continue reading the token
@@ -109,8 +109,8 @@ static void parse_input(char* input, struct shell_command* out) {
                 input_search_string = delim_loc + 1;  // continue reading the token
             }
             else if (!(*(delim_loc - 1) == ' ' && *(delim_loc - 2) != '\\')) {
-                // store the start of this token in token (unless another \ or " delim is already storing something there)
-                if (last_delim != '\\' && last_delim != '"') token = input_search_string;
+                // store the start of this token in token (unless the start of a token is already being stored there)
+                if (token == NULL) token = input_search_string;
                 last_delim = '"';
                 input_search_string = delim_loc + 1;  // continue reading the token
             }
@@ -144,7 +144,8 @@ static void parse_input(char* input, struct shell_command* out) {
 
                             // update last_token and last_delim
                             last_token = token;
-                            last_delim = '\0';  // cannot set last_delim to " or it will think we are still searching for a closing "
+                            token = NULL;
+                            last_delim = delim;
 
                             input_search_string = delim_loc + 1;
                             break;
@@ -164,6 +165,7 @@ static void parse_input(char* input, struct shell_command* out) {
 
             // update last_token and last_delim
             last_token = token;
+            token = NULL;
             last_delim = delim;
 
             if (delim_loc == NULL) break;  // no more delim chars, so the remainder of the string was the final token so we are done
