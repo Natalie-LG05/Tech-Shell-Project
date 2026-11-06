@@ -86,8 +86,10 @@ static void parse_input(char* input, struct command* out) {
     struct command cmd = {};  // initialize the command to default "zero" values
 
     // copy the string to avoid changing the provided string
-    char* input_search_string = calloc(strlen(input) + 1, sizeof(char));
-    strcpy(input_search_string, input);
+    char* input_string = calloc(strlen(input) + 1, sizeof(char));
+    strcpy(input_string, input);
+
+    char* input_search_string = input_string;
 
     const char* deliminators = " <>|\"\\";  // stop when reaching any of these characters
     while (1) {  // loop until reaching the end of the original input
@@ -107,7 +109,7 @@ static void parse_input(char* input, struct command* out) {
         }
     }
 
-    free(input_search_string);  // free allocated memory to avoid memory leaks
+    free(input_string);  // free allocated memory to avoid memory leaks
 
     *out = cmd;
 }
