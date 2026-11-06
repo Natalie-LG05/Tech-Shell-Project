@@ -89,7 +89,9 @@ static void parse_input(char* input, struct shell_command* out) {
 
             // if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
             if (delim == '\\') {
+                printf("Rest of string be4 \\ removal: '%s'\n", input_search_string);
                 memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
+                printf("Rest of string after \\ removal: '%s'\n", input_search_string);
                 if (last_delim != '\\') last_token = input_search_string;
                 last_delim = '\\';
 
@@ -97,6 +99,8 @@ static void parse_input(char* input, struct shell_command* out) {
             } else {
                 // simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
                 *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
+                printf("Last delim: '%c'\n", last_delim);
+                printf("Last token: '%s'\n", last_token);
                 char* token = input_search_string;
                 if (last_delim == '\\') token = last_token;
                 printf("Token: '%s' (Delim: '%c')\n", token, delim);
