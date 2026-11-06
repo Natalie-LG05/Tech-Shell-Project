@@ -88,7 +88,7 @@ static struct command* parse_input(char* input) {
     char* input_search_string = calloc(strlen(input) + 1, sizeof(char));
     strcpy(input, input_search_string);
 
-    char* deliminators = " <>|\"\\";  // stop when reaching any of these characters
+    const char* deliminators = " <>|\"\\";  // stop when reaching any of these characters
     while (*input_search_string != '\0') {  // loop until reaching the end of the original input
         char *delim_loc = strpbrk(input_search_string, deliminators);  // find the next delim char
         char delim = *delim_loc;  // save what character we stopped at
@@ -101,7 +101,7 @@ static struct command* parse_input(char* input) {
 
     free(input_search_string);  // free allocated memory to avoid memory leaks
 
-    return cmd;
+    return &cmd;
 }
 
 /*
