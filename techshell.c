@@ -78,7 +78,7 @@ static void parse_input(char* input, struct shell_command* out) {
     char last_delim = '\0';
     while (true) {
         // skip over leading spaces to get to the start of the token
-        input_search_string += strspn(input_search_string, " ");
+        if (token == NULL) input_search_string += strspn(input_search_string, " ");
         // if we reach the end of the string here, that means we had trailing spaces which should be ignored
         if (*input_search_string == '\0') {
             // do not break if token isn't NULL, as we still need to process the last token
