@@ -92,19 +92,26 @@ static void parse_input(char* input, struct command* out) {
     char* input_search_string = input_string;
 
     const char* deliminators = " <>|\"\\";  // stop when reaching any of these characters
-    while (1) {  // loop until reaching the end of the original input
+    while (1) {
+        // skip over leading spaces to get to the start of the token
+        input_search_string += strspn(input_search_string, " ");
+        // if we reach the end of the string here, that means we had trailing spaces which should be ignored
+        if (*input_search_string == '\0') break;
+
         char *delim_loc = strpbrk(input_search_string, deliminators);  // find the next delim char
 
         if (delim_loc != NULL) {
             char delim = *delim_loc;  // save what character we stopped at
 
             *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
-            printf("Token: %s\tDelim: %c\n", input_search_string, delim);
+
+            printf("Token: %s (Delim: '%c')\n", input_search_string, delim);
 
             input_search_string = delim_loc + 1;  // move to after the char we stopped at
         } else {
             // no more delim chars, so the remainder of the string is the final token
-            printf("Token: %s\tDelim: None\n", input_search_string);
+            printf("Token: %s (Delim: None)\n", input_search_string);
+
             break;
         }
     }
