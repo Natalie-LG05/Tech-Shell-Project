@@ -120,7 +120,7 @@ static void parse_input(char* input, struct shell_command* out) {
                     if (delim_loc != NULL) {
                         delim = *delim_loc;
                         if (delim == '\\') {  // a / inside quotes is used to escape a \ or ", otherwise it is a literal '\'
-                            switch (*delim_loc + 1) {
+                            switch (*(delim_loc + 1)) {
                                 case '"':
                                 case '\\':
                                     // remove the \, ignore the next char, and keep going to get the rest of the token
