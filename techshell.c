@@ -90,8 +90,22 @@ static void parse_input(char* input, struct shell_command* out) {
             // if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
             if (delim == '\\') {
                 memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
+                if (last_delim != '\\') last_token = input_search_string;
+                last_delim = '\\';
+
                 input_search_string = delim_loc + 1;
-                continue;
+            } else {
+                // simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
+                *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
+                char* token = input_search_string;
+                if (last_delim == '\\') token = last_token;
+                printf("Token: '%s' (Delim: '%c')\n", token, delim);
+
+                // update last_token and last_delim if applicable
+                last_token = token;
+                last_delim = delim;
+
+                input_search_string = delim_loc + 1;  // move to after the char we stopped at
             }
 
             // if delim is a ", then go until finding a \ or "
@@ -108,14 +122,6 @@ static void parse_input(char* input, struct shell_command* out) {
                 // if the token is a <, ignore it and set the next token as the source_filepath
                 // if the token is a |, ignore it and recursively call parse_input to set everything after the | as the dest_command
                 // otherwise the token is an arg, filename, or chained command depending on the previous token and delim
-
-            // simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
-            *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
-            printf("Token: '%s' (Delim: '%c')\n", input_search_string, delim);
-
-            // update last_token and last_delim if applicable
-
-            input_search_string = delim_loc + 1;  // move to after the char we stopped at
         } else {
             // no more delim chars, so the remainder of the string is the final token
             printf("Token: '%s' (Delim: None)\n", input_search_string);
