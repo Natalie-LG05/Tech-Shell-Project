@@ -21,7 +21,7 @@ struct command {
 // Functional Prototypes
 static void display_prompt(char* cur_dir);
 static char* get_input();
-static struct command* parse_input(char* input);
+static void parse_input(char* input, struct command* out);
 // static bool execute_command(struct ShellCommand command);
 
 
@@ -39,7 +39,8 @@ int main() // MAIN
 
         input = get_input();
 
-        struct command command = *parse_input(input);
+        struct command command = {};
+        parse_input(input, &command);
 
         // is_running = execute_command(command);
     }
@@ -81,7 +82,7 @@ static char* get_input() {
     Be sure to consider/test for situations when a backslash is used to escape the space char
     and when quotes are used to group together various tokens.
 */
-static struct command* parse_input(char* input) {
+static void parse_input(char* input, struct command* out) {
     struct command cmd = {};  // initialize the command to default "zero" values
 
     // copy the string to avoid changing the provided string
@@ -101,7 +102,7 @@ static struct command* parse_input(char* input) {
 
     free(input_search_string);  // free allocated memory to avoid memory leaks
 
-    return &cmd;
+    *out = cmd;
 }
 
 /*
