@@ -99,11 +99,11 @@ static void parse_input(char* input, struct shell_command* out) {
         }
         else if (delim == '"') {
             // if delim is a ", treat this token normally then go until finding a \ or " to get the next token
-            char* token =  last_delim == '\\' ? last_token : input_search_string;
-
-            // for testing, simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
-            if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
-            printf("Token: '%s' (Delim: '%c')\n", token, delim);
+            // char* token =  last_delim == '\\' ? last_token : input_search_string;
+            //
+            // // for testing, simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
+            // if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
+            // printf("Token: '%s' (Delim: '%c')\n", token, delim);
 
             input_search_string = delim_loc + 1;  // move to after the char we stopped at
 
@@ -124,7 +124,7 @@ static void parse_input(char* input, struct shell_command* out) {
                         }
                     } else {
                         // we have found the closing " without a \ before it so everything between the "s is the token
-                        token = last_token;
+                        char* token = last_token;
                         *delim_loc = '\0';  // change the closing " to a null terminator to make accessing the token simple
 
                         printf("Token: '%s' (Delim: '%c')\n", token, delim);
