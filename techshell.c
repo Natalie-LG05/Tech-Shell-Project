@@ -84,50 +84,46 @@ static void parse_input(char* input, struct shell_command* out) {
 
         char *delim_loc = strpbrk(input_search_string, deliminators);  // find the next delim char
 
-        if (delim_loc != NULL) {
-            char delim = *delim_loc;  // save what character we stopped at
+        char delim = '\0';
+        if (delim_loc != NULL) delim = *delim_loc;  // save what character we stopped at
 
-            // if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
-            if (delim == '\\') {
-                memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
-                if (last_delim != '\\') last_token = input_search_string;
-                last_delim = '\\';
+        // if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
+        if (delim == '\\') {
+            memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
+            if (last_delim != '\\') last_token = input_search_string;
+            last_delim = '\\';
 
-                input_search_string = delim_loc + 1;
-            } else {
-                // simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
-                *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
-                char* token =  last_delim == '\\' ? last_token : input_search_string;
-                printf("Token: '%s' (Delim: '%c')\n", token, delim);
-
-                // update last_token and last_delim if applicable
-                last_token = token;
-                last_delim = delim;
-
-                input_search_string = delim_loc + 1;  // move to after the char we stopped at
-            }
-
-            // if delim is a ", then go until finding a \ or "
-                // if a \ is found, then remove the \, ignore the next char, and keep going to get the rest of the token
-                // if another " is found (without a \ before it), then everything between the "s is the token
-
-            // if the delim is a >, set the next token as the dest_filepath
-            // if the delim is a <, set the next token as the source_filepath
-            // if the delim is a |, recursively call parse_input to set everything after the | as the dest_command
-
-            // if last_token is NULL, the token is the command name so set name
-            // otherwise the token will be an arg, filename, chained command, or redirect operator
-                // if the token is a >, ignore it and set the next token as the dest_filepath
-                // if the token is a <, ignore it and set the next token as the source_filepath
-                // if the token is a |, ignore it and recursively call parse_input to set everything after the | as the dest_command
-                // otherwise the token is an arg, filename, or chained command depending on the previous token and delim
+            input_search_string = delim_loc + 1;
         } else {
-            // no more delim chars, so the remainder of the string is the final token
+            // simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
+            if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
             char* token =  last_delim == '\\' ? last_token : input_search_string;
-            printf("Token: '%s' (Delim: None)\n", token);
+            printf("Token: '%s' (Delim: '%c')\n", token, delim);
 
-            break;
+            // update last_token and last_delim if applicable
+            last_token = token;
+            last_delim = delim;
+
+            input_search_string = delim_loc + 1;  // move to after the char we stopped at
+
+            // no more delim chars, so the remainder of the string was the final token so we are done
+            if (delim_loc == NULL) break;
         }
+
+        // if delim is a ", then go until finding a \ or "
+            // if a \ is found, then remove the \, ignore the next char, and keep going to get the rest of the token
+            // if another " is found (without a \ before it), then everything between the "s is the token
+
+        // if the delim is a >, set the next token as the dest_filepath
+        // if the delim is a <, set the next token as the source_filepath
+        // if the delim is a |, recursively call parse_input to set everything after the | as the dest_command
+
+        // if last_token is NULL, the token is the command name so set name
+        // otherwise the token will be an arg, filename, chained command, or redirect operator
+            // if the token is a >, ignore it and set the next token as the dest_filepath
+            // if the token is a <, ignore it and set the next token as the source_filepath
+            // if the token is a |, ignore it and recursively call parse_input to set everything after the | as the dest_command
+            // otherwise the token is an arg, filename, or chained command depending on the previous token and delim
     }
 
     free(input_string);  // free allocated memory to avoid memory leaks
