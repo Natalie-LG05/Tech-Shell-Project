@@ -128,7 +128,11 @@ static void parse_input(char* input, struct shell_command* out) {
                 // otherwise the token is an arg, filename, or chained command depending on the previous token and delim
         } else {
             // no more delim chars, so the remainder of the string is the final token
-            printf("Token: '%s' (Delim: None)\n", input_search_string);
+            printf("Last delim: '%c'\n", last_delim);
+            printf("Last token: '%s'\n", last_token);
+            char* token = input_search_string;
+            if (last_delim == '\\') token = last_token;
+            printf("Token: '%s' (Delim: None)\n", token);
 
             break;
         }
