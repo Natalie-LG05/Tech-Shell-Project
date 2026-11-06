@@ -133,6 +133,8 @@ static void parse_input(char* input, struct shell_command* out) {
                         last_delim = delim;
 
                         input_search_string = delim_loc + 1;
+
+                        break;
                     }
                 } else {
                     // input is missing a closing ", so give an error or something idk yet
