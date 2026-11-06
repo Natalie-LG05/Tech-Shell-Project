@@ -73,7 +73,6 @@ static void parse_input(char* input, struct shell_command* out) {
 
     char* input_search_string = input_string;
 
-    const char* deliminators = " <>|\"\\";  // stop when reaching any of these characters
     char* last_token = NULL;
     char last_delim = '\0';
     while (true) {
@@ -82,7 +81,7 @@ static void parse_input(char* input, struct shell_command* out) {
         // if we reach the end of the string here, that means we had trailing spaces which should be ignored
         if (*input_search_string == '\0') break;
 
-        char *delim_loc = strpbrk(input_search_string, deliminators);  // find the next delim char
+        char *delim_loc = strpbrk(input_search_string, " <>|\"\\");  // find the next deliminator
 
         char delim = '\0';
         if (delim_loc != NULL) delim = *delim_loc;  // save what character we stopped at
@@ -98,13 +97,7 @@ static void parse_input(char* input, struct shell_command* out) {
             input_search_string = delim_loc + 1;  // continue reading the token
         }
         else if (delim == '"') {
-            // if delim is a ", treat this token normally then go until finding a \ or " to get the next token
-            // char* token =  last_delim == '\\' ? last_token : input_search_string;
-            //
-            // // for testing, simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
-            // if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
-            // printf("Token: '%s' (Delim: '%c')\n", token, delim);
-
+            // if delim is a ", go until finding a closing " to get the next token
             input_search_string = delim_loc + 1;  // move to after the char we stopped at
 
             last_token = input_search_string;  // store where this token starts
@@ -112,7 +105,7 @@ static void parse_input(char* input, struct shell_command* out) {
                 delim_loc = strpbrk(input_search_string, "\\\"");
                 if (delim_loc != NULL) {
                     delim = *delim_loc;
-                    if (delim == '\\') {
+                    if (delim == '\\') {  // a / inside quotes is used to escape a \ or ", otherwise it is a literal '\'
                         switch (*delim_loc + 1) {
                             case '"':
                             case '\\':
