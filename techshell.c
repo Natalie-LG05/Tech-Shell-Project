@@ -28,12 +28,11 @@ static void execute_command(struct shell_command command);
 int main() // MAIN
 {
     char* cur_dir = NULL;
-    bool is_running = true;
 
     char* input = NULL;
 
     // repeatedly prompt the user for input
-    while (is_running) {
+    while (true) {
         cur_dir = getcwd(NULL, 0);
         display_prompt(cur_dir);
 
@@ -60,6 +59,8 @@ static char* get_input() {
     char* input = NULL;
     size_t size = 0;
     ssize_t chars_read = getline(&input, &size, stdin);  // use this if I end up needing error handling
+    if (chars_read > 0 && input[chars_read - 1] == '\n')
+        input[chars_read - 1] = '\0';  // remove the trailing newline if there is one
     return input;
 }
 
