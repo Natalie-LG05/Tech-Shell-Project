@@ -90,52 +90,69 @@ static void parse_input(char* input, struct shell_command* out) {
         if (delim == '\\') {
             // shift over the rest of the string, removing the '\'
             memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
-            // store the start of this token in last_token (unless another \ delim is already storing something there)
-            if (last_delim != '\\') last_token = input_search_string;
+            // store the start of this token in last_token (unless another \ or " delim is already storing something there)
+            if (last_delim != '\\' && last_delim != '"') last_token = input_search_string;
             last_delim = '\\';
 
             input_search_string = delim_loc + 1;  // continue reading the token
         }
         else if (delim == '"') {
-            // if delim is a ", go until finding a closing " to get the next token
-            input_search_string = delim_loc + 1;  // move to after the char we stopped at
+            // if we find a " in the first token of a word or without a space before it, treat it as a literal "
+            if (last_token == NULL) {
+                // store the start of this token in last_token
+                last_token = input_search_string;
+                last_delim = '"';
+                input_search_string = delim_loc + 1;  // continue reading the token
+            }
+            else if (!(*(delim_loc - 1) == ' ' && *(delim_loc - 2) != '\\')) {
+                // store the start of this token in last_token (unless another \ or " delim is already storing something there)
+                if (last_delim != '\\' && last_delim != '"') last_token = input_search_string;
+                last_delim = '"';
 
-            last_token = input_search_string;  // store where this token starts
-            while (true) {  // loop until finding the closing " in order to get this token
-                delim_loc = strpbrk(input_search_string, "\\\"");
-                if (delim_loc != NULL) {
-                    delim = *delim_loc;
-                    if (delim == '\\') {  // a / inside quotes is used to escape a \ or ", otherwise it is a literal '\'
-                        switch (*delim_loc + 1) {
-                            case '"':
-                            case '\\':
-                                // remove the \, ignore the next char, and keep going to get the rest of the token
-                                memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
-                                input_search_string = delim_loc + 1;
-                                break;
-                            default: ;  // if it isn't escaping a " or \, then just treat it as a literal \ and continue
+                input_search_string = delim_loc + 1;  // continue reading the token
+            }
+            else {
+                // if delim is a " and it is not in the middle of a token (i.e. it is the start of a token),
+                // go until finding a closing " to get the next token
+                input_search_string = delim_loc + 1;  // move to after the char we stopped at
+
+                last_token = input_search_string;  // store where this token starts
+                while (true) {  // loop until finding the closing " in order to get this token
+                    delim_loc = strpbrk(input_search_string, "\\\"");
+                    if (delim_loc != NULL) {
+                        delim = *delim_loc;
+                        if (delim == '\\') {  // a / inside quotes is used to escape a \ or ", otherwise it is a literal '\'
+                            switch (*delim_loc + 1) {
+                                case '"':
+                                case '\\':
+                                    // remove the \, ignore the next char, and keep going to get the rest of the token
+                                    memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
+                                    input_search_string = delim_loc + 1;
+                                    break;
+                                default: ;  // if it isn't escaping a " or \, then just treat it as a literal \ and continue
+                            }
+                        } else {
+                            // we have found the closing " without a \ before it so everything between the "s is the token
+                            char* token = last_token;
+                            *delim_loc = '\0';  // change the closing " to a null terminator to make accessing the token simple
+
+                            printf("Token: '%s' (Delim: '%c')\n", token, delim);
+
+                            last_token = token;
+                            last_delim = delim;
+
+                            input_search_string = delim_loc + 1;
+
+                            break;
                         }
                     } else {
-                        // we have found the closing " without a \ before it so everything between the "s is the token
-                        char* token = last_token;
-                        *delim_loc = '\0';  // change the closing " to a null terminator to make accessing the token simple
-
-                        printf("Token: '%s' (Delim: '%c')\n", token, delim);
-
-                        last_token = token;
-                        last_delim = delim;
-
-                        input_search_string = delim_loc + 1;
-
-                        break;
+                        // input is missing a closing ", so give an error or something idk yet
                     }
-                } else {
-                    // input is missing a closing ", so give an error or something idk yet
                 }
             }
         }
         else {
-            char* token =  last_delim == '\\' ? last_token : input_search_string;
+            char* token = last_delim == '\\' || last_delim == '"' ? last_token : input_search_string;
 
             // for testing, simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
             if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
