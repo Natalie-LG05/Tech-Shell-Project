@@ -79,7 +79,9 @@ static void parse_input(char* input, struct shell_command* out) {
         // skip over leading spaces to get to the start of the token
         input_search_string += strspn(input_search_string, " ");
         // if we reach the end of the string here, that means we had trailing spaces which should be ignored
-        if (*input_search_string == '\0') break;
+        if (*input_search_string == '\0') {
+            if (!(last_delim == '\\' || last_delim == '"')) break;
+        }
 
         char *delim_loc = strpbrk(input_search_string, " <>|\"\\");  // find the next deliminator
 
@@ -108,7 +110,6 @@ static void parse_input(char* input, struct shell_command* out) {
                 // store the start of this token in last_token (unless another \ or " delim is already storing something there)
                 if (last_delim != '\\' && last_delim != '"') last_token = input_search_string;
                 last_delim = '"';
-
                 input_search_string = delim_loc + 1;  // continue reading the token
             }
             else {
