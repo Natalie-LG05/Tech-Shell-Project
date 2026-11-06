@@ -73,6 +73,7 @@ static void parse_input(char* input, struct shell_command* out) {
 
     char* input_search_string = input_string;
 
+    char* token = NULL;
     char* last_token = NULL;
     char last_delim = '\0';
     while (true) {
@@ -80,6 +81,7 @@ static void parse_input(char* input, struct shell_command* out) {
         input_search_string += strspn(input_search_string, " ");
         // if we reach the end of the string here, that means we had trailing spaces which should be ignored
         if (*input_search_string == '\0') {
+            // if the last_delim was a \ or ", we still need to process the last token
             if (!(last_delim == '\\' || last_delim == '"')) break;
         }
 
@@ -92,32 +94,32 @@ static void parse_input(char* input, struct shell_command* out) {
         if (delim == '\\') {
             // shift over the rest of the string, removing the '\'
             memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
-            // store the start of this token in last_token (unless another \ or " delim is already storing something there)
-            if (last_delim != '\\' && last_delim != '"') last_token = input_search_string;
+            // store the start of this token in token (unless another \ or " delim is already storing something there)
+            if (last_delim != '\\' && last_delim != '"') token = input_search_string;
             last_delim = '\\';
 
             input_search_string = delim_loc + 1;  // continue reading the token
         }
         else if (delim == '"') {
-            // if we find a " in the first token of a word or without a space before it, treat it as a literal "
+            // if we find a " in the first token or without a literal space before it, treat it as a literal "
             if (last_token == NULL) {
-                // store the start of this token in last_token
-                last_token = input_search_string;
+                // store the start of this token in token
+                token = input_search_string;
                 last_delim = '"';
                 input_search_string = delim_loc + 1;  // continue reading the token
             }
             else if (!(*(delim_loc - 1) == ' ' && *(delim_loc - 2) != '\\')) {
-                // store the start of this token in last_token (unless another \ or " delim is already storing something there)
-                if (last_delim != '\\' && last_delim != '"') last_token = input_search_string;
+                // store the start of this token in token (unless another \ or " delim is already storing something there)
+                if (last_delim != '\\' && last_delim != '"') token = input_search_string;
                 last_delim = '"';
                 input_search_string = delim_loc + 1;  // continue reading the token
             }
             else {
                 // if delim is a " and it is not in the middle of a token (i.e. it is the start of a token),
-                // go until finding a closing " to get the next token
+                // go until finding a closing " to get the token
                 input_search_string = delim_loc + 1;  // move to after the char we stopped at
 
-                last_token = input_search_string;  // store where this token starts
+                token = input_search_string;  // store where this token starts
                 while (true) {  // loop until finding the closing " in order to get this token
                     delim_loc = strpbrk(input_search_string, "\\\"");
                     if (delim_loc != NULL) {
@@ -130,20 +132,21 @@ static void parse_input(char* input, struct shell_command* out) {
                                     memmove(delim_loc, delim_loc + 1, strlen(delim_loc));
                                     input_search_string = delim_loc + 1;
                                     break;
-                                default: ;  // if it isn't escaping a " or \, then just treat it as a literal \ and continue
+                                default:
+                                    // if it isn't escaping a " or \, then just treat it as a literal \ and continue
+                                    input_search_string = delim_loc + 1;
                             }
                         } else {
                             // we have found the closing " without a \ before it so everything between the "s is the token
-                            char* token = last_token;
                             *delim_loc = '\0';  // change the closing " to a null terminator to make accessing the token simple
 
                             printf("Token: '%s' (Delim: '%c')\n", token, delim);
 
+                            // update last_token and last_delim
                             last_token = token;
-                            last_delim = delim;
+                            last_delim = '\0';  // cannot set last_delim to " or it will think we are still searching for a closing "
 
                             input_search_string = delim_loc + 1;
-
                             break;
                         }
                     } else {
@@ -153,7 +156,7 @@ static void parse_input(char* input, struct shell_command* out) {
             }
         }
         else {
-            char* token = last_delim == '\\' || last_delim == '"' ? last_token : input_search_string;
+            if (token == NULL) token = input_search_string;
 
             // for testing, simply assume everything from where we are up until the delim is the token (may not be the case based on certain chars)
             if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
