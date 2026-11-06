@@ -38,7 +38,7 @@ int main() // MAIN
         display_prompt(cur_dir);
 
         input = get_input();
-        printf("Input: %s\n", input);
+        printf("Input: %s", input);
 
         struct command command = {};
         parse_input(input, &command);
