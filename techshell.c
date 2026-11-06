@@ -108,7 +108,7 @@ static void parse_input(char* input, struct shell_command* out) {
                 last_delim = '"';
                 input_search_string = delim_loc + 1;  // continue reading the token
             }
-            else if (!(*(delim_loc - 1) == ' ' && *(delim_loc - 2) != '\\')) {
+            else if (*(delim_loc - 1) != '\0') {  // if the char be4 the " is \0, then this " must be the start of a token
                 // store the start of this token in token (unless the start of a token is already being stored there)
                 if (token == NULL) token = input_search_string;
                 last_delim = '"';
