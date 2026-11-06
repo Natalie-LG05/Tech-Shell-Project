@@ -39,7 +39,7 @@ int main() // MAIN
 
         input = get_input();
 
-        struct command command = parse_input(input);
+        struct command command = *parse_input(input);
 
         // is_running = execute_command(command);
     }
