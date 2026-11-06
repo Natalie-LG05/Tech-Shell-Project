@@ -100,7 +100,9 @@ static void parse_input(char* input, struct command* out) {
         *delim_loc = '\0';  // change the delim to a null terminator to make accessing the preceding token simple
         printf("Token: %s\tDelim: %c\n", input_search_string, delim);
 
+        printf("Still working!");
         input_search_string = delim_loc + 1;  // move to after the char we stopped at
+        printf("Is it still working?");
     }
 
     free(input_search_string);  // free allocated memory to avoid memory leaks
