@@ -22,7 +22,7 @@ struct shell_command {
 static void display_prompt(char* cur_dir);
 static char* get_input();
 static void parse_input(char* input, struct shell_command* out);
-static void execute_command(struct shell_command command);
+static void execute_command(struct shell_command* command);
 
 
 int main() // MAIN
@@ -41,7 +41,7 @@ int main() // MAIN
         struct shell_command command = {};
         parse_input(input, &command);
 
-        execute_command(command);
+        execute_command(&command);
     }
 
     free(cur_dir);
@@ -125,7 +125,7 @@ static void parse_input(char* input, struct shell_command* out) {
 }
 
 // test if `exit` command works
-static void execute_command(struct shell_command command) {
+static void execute_command(struct shell_command* command) {
     // fork() for a child to run execvp() in (unless the command is 'cd')
 
     // open necessary source and destination file streams
