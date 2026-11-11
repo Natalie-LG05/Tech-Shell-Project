@@ -93,7 +93,9 @@ static void parse_input(char* input, struct shell_command* out) {
     char* last_token = NULL;
 
     bool in_quotes = false;
+
     char last_redirect = '\0';
+    char current_redirect = '\0';
 
     while (true) {
         // skip over leading spaces to get to the start of the token
@@ -156,8 +158,8 @@ static void parse_input(char* input, struct shell_command* out) {
         }
         else if (delim == '>' || delim == '<' || delim == '|') {
             // redirects will always end up as delims, never standalone tokens
-            // when a redirect is spotted, set last_redirect to indicate that we must apply it
-            if (last_redirect == '\0') last_redirect = delim;
+            // when a redirect is spotted, set current_redirect to indicate that we must process it
+            if (current_redirect == '\0') current_redirect = delim;
             else {
                 // for simplicity sake, just give a syntax error when several redirects are put strangely next to each other
                 perror("Invalid redirect symbol syntax.");
@@ -185,17 +187,23 @@ static void parse_input(char* input, struct shell_command* out) {
                 cmd.args[1] = NULL;
                 cmd.num_args += 2;
             }
-            else if (last_redirect == '>') {
+            else if (last_redirect == '>' && current_redirect == '>') {
                 // the token comes after a >, so it is a destination file
                 cmd.dest_filepath = strdup(token);
-                last_redirect = '\0';  // indicate that we are done processing the last redirect
+
+                // indicate that we are done processing the last redirect
+                last_redirect = '\0';
+                current_redirect = '\0';
             }
-            else if (last_redirect == '<') {
+            else if (last_redirect == '<' && current_redirect == '<') {
                 // the token comes after a <, so it is a source file
                 cmd.source_filepath = strdup(token);
-                last_redirect = '\0';  // indicate that we are done processing the last redirect
+
+                // indicate that we are done processing the last redirect
+                last_redirect = '\0';
+                current_redirect = '\0';
             }
-            else if (last_redirect == '|') {
+            else if (last_redirect == '|' && current_redirect == '|') {
 
             }
             else {
@@ -219,6 +227,9 @@ static void parse_input(char* input, struct shell_command* out) {
         // update last_token
         last_token = token;
         token = NULL;  // indicate that we are no longer processing a token
+
+        // if there is an unprocessed redirect, set last_redirect to indicate that the next token should be processed based on the redirect
+        if (current_redirect != '\0') last_redirect = current_redirect;
 
         if (delim_loc == NULL) break;  // no more delim chars, so the remainder of the string was the final token so we are done
         input_search_string = delim_loc + 1;  // move to after the char we stopped at
