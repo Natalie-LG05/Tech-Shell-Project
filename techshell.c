@@ -274,7 +274,7 @@ static void print_shell_command(struct shell_command command) {
     if (command.dest_command == NULL) printf("\tDestination Command: None\n");
     else {
         printf("\tDestination Command:\n");
-        execute_command(*command.dest_command);
+        print_shell_command(*command.dest_command);
     }
 }
 
