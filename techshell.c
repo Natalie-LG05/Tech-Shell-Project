@@ -292,8 +292,8 @@ static void execute_command(struct shell_command command) {
 
     if (strcmp(command.name, "cd") == 0) {
         // if the command name is cd, change directories to the filepath given by the first argument (very basic cd command)
-        char* dir_path = command.args[1] != NULL ? command.args[1] : "~";
-        if (chdir(dir_path) != 0) {
+        char* dir_path = command.args[1] != NULL ? command.args[1] : getenv("HOME");
+        if (chdir(dir_path) != 0) {  // NOTE: this will break if the user's HOME path environment variable is not set
             // an error occurred
             perror("chdir() failed");
             // may need to connect command's stdout to destination command's stdin
