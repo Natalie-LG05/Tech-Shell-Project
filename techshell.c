@@ -162,7 +162,7 @@ static void parse_input(char* input, struct shell_command* out) {
             if (current_redirect == '\0') current_redirect = delim;
             else {
                 // for simplicity sake, just give a syntax error when several redirects are put strangely next to each other
-                perror("Invalid redirect symbol syntax.");
+                fprintf(stderr, "Invalid redirect symbol syntax\n");
                 cmd.name = NULL;  // set name to null so that the caller knows an error occurred
                 *out = cmd;
                 return;
@@ -213,7 +213,7 @@ static void parse_input(char* input, struct shell_command* out) {
                 // the token must be an argument to the command, so reallocate space for it
                 char** temp_args = realloc(cmd.args, sizeof(char*) * (cmd.num_args + 1));
                 if (temp_args == NULL) {
-                    perror("There was an error reallocating memory for args.");
+                    perror("There was an error reallocating memory for args");
                     cmd.name = NULL;  // set name to null so that the caller knows an error occurred
                     *out = cmd;
                     return;
