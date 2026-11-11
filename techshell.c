@@ -81,9 +81,9 @@ static void parse_input(char* input, struct shell_command* out) {
 
     char* token = NULL;
     char* last_token = NULL;
-    char last_delim = '\0';
 
     bool in_quotes = false;
+    char last_redirect = '\0';
 
     while (true) {
         // skip over leading spaces to get to the start of the token
@@ -119,7 +119,6 @@ static void parse_input(char* input, struct shell_command* out) {
                 if (token == NULL) token = input_search_string;
             }
 
-            last_delim = '\\';
             input_search_string = delim_loc + 1;  // continue reading the token
             continue;
         }
@@ -131,7 +130,6 @@ static void parse_input(char* input, struct shell_command* out) {
                 if (last_token == NULL || !(*(delim_loc - 1) == '\0' || *(delim_loc - 1) == ' ')) {
                     // store the start of this token in token
                     if (token == NULL) token = input_search_string;
-                    last_delim = '"';
                     input_search_string = delim_loc + 1;  // continue reading the token
                 } else {
                     // if delim is a " and it is not in the middle of a token (i.e. it is the start of a token),
@@ -145,9 +143,13 @@ static void parse_input(char* input, struct shell_command* out) {
 
             // we have found the closing " without a \ before it, so everything between the "s is the token
             in_quotes = false;  // set the parsing loop to run in normal mode again
-        } else {
-            // redirects will always end up as delims, never standalone tokens
+        }
+        else if (delim == '>') {
             // if the delim is a >, set the next token as the dest_filepath
+            last_redirect = '>';
+        }
+        else {
+            // redirects will always end up as delims, never standalone tokens
             // if the delim is a <, set the next token as the source_filepath
             // if the delim is a |, recursively call parse_input to set everything after the | as the dest_command
         }
@@ -157,37 +159,38 @@ static void parse_input(char* input, struct shell_command* out) {
         if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
 
         // process the token
-        printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
+        if (strlen(token) > 0) {
+            printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
 
-        if (last_token == NULL) {
-            // if last_token is NULL, the token is the command name so set name
-            // also initialize args with the name as the first value and make sure it null terminates
-            cmd.name = strdup(token);
-            cmd.args = calloc(2, sizeof(char*));
-            cmd.args[0] = strdup(token);
-            cmd.args[1] = NULL;
-            cmd.num_args += 2;
-        } else {  // handle if the token is a filename or destination command (based on previous token and delim)
-            // the token must be an argument to the command, so reallocate space for it
-            char** temp_args = realloc(cmd.args, sizeof(char*) * (cmd.num_args + 1));
-            if (temp_args == NULL) {
-                perror("There was an error reallocating memory for args.");
-                cmd.name = NULL;  // set name to null so that the caller knows an error occurred
-                *out = cmd;
-                return;
+            if (last_token == NULL) {
+                // if last_token is NULL, the token is the command name so set name
+                // also initialize args with the name as the first value and make sure it null terminates
+                cmd.name = strdup(token);
+                cmd.args = calloc(2, sizeof(char*));
+                cmd.args[0] = strdup(token);
+                cmd.args[1] = NULL;
+                cmd.num_args += 2;
+            } else {  // handle if the token is a filename or destination command (based on previous token and delim)
+                // the token must be an argument to the command, so reallocate space for it
+                char** temp_args = realloc(cmd.args, sizeof(char*) * (cmd.num_args + 1));
+                if (temp_args == NULL) {
+                    perror("There was an error reallocating memory for args.");
+                    cmd.name = NULL;  // set name to null so that the caller knows an error occurred
+                    *out = cmd;
+                    return;
+                }
+
+                // then, if the allocation was successful, add the argument
+                cmd.args = temp_args;
+                cmd.num_args++;
+                cmd.args[cmd.num_args - 2] = strdup(token);
+                cmd.args[cmd.num_args - 1] = NULL;
             }
 
-            // then, if the allocation was successful, add the argument
-            cmd.args = temp_args;
-            cmd.num_args++;
-            cmd.args[cmd.num_args - 2] = strdup(token);
-            cmd.args[cmd.num_args - 1] = NULL;
+            // update last_token
+            last_token = token;
+            token = NULL;  // indicate that we are no longer processing a token
         }
-
-        // update last_token and last_delim
-        last_token = token;
-        last_delim = delim;
-        token = NULL;  // indicate that we are no longer processing a token
 
         if (delim_loc == NULL) break;  // no more delim chars, so the remainder of the string was the final token so we are done
         input_search_string = delim_loc + 1;  // move to after the char we stopped at
