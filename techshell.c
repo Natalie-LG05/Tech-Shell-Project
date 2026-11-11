@@ -185,16 +185,19 @@ static void parse_input(char* input, struct shell_command* out) {
                 cmd.args[1] = NULL;
                 cmd.num_args += 2;
             }
-            // else if (last_redirect == '>') {
-            //     // the token comes after a >, so it is a destination file
-            //     cmd.dest_filepath = strdup(token);
-            // }
-            // else if (last_redirect == '<') {
-            //
-            // }
-            // else if (last_redirect == '|') {
-            //
-            // }
+            else if (last_redirect == '>') {
+                // the token comes after a >, so it is a destination file
+                cmd.dest_filepath = strdup(token);
+                last_redirect = '\0';  // indicate that we are done processing the last redirect
+            }
+            else if (last_redirect == '<') {
+                // the token comes after a <, so it is a source file
+                cmd.source_filepath = strdup(token);
+                last_redirect = '\0';  // indicate that we are done processing the last redirect
+            }
+            else if (last_redirect == '|') {
+
+            }
             else {
                 // the token must be an argument to the command, so reallocate space for it
                 char** temp_args = realloc(cmd.args, sizeof(char*) * (cmd.num_args + 1));
