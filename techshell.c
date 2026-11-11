@@ -50,7 +50,7 @@ int main() // MAIN
         // only attempt to execute if a valid command was able to be constructed
         // parse_input will set command.name to NULL if there was an error (or if input was just a blank line)
         // do not execute anything if the command is exit
-        if (command.name != NULL) print_shell_command(command);
+        // if (command.name != NULL) print_shell_command(command);  // debugging line
         if (command.name != NULL && !is_exit) execute_command(command);
 
         // free any memory that was dynamically allocated (such as by calloc() or strdup()) to prevent memory leaks
