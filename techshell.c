@@ -42,12 +42,15 @@ int main() // MAIN
 
         struct shell_command command;
         parse_input(input, &command);
+        printf("Parsed a command!");
 
         // only attempt to execute if a valid command was able to be constructed
         // parse_input will set command.name to NULL if there was an error
         if (command.name != NULL) execute_command(command);
+        printf("Awaiting next command 1!");
 
         free(command.args);
+        printf("Awaiting next command 2!");
     }
 
     free(cur_dir);
@@ -184,8 +187,8 @@ static void parse_input(char* input, struct shell_command* out) {
 
         // update last_token and last_delim
         last_token = token;
-        token = NULL;  // indicate that we are no longer processing a token
         last_delim = delim;
+        token = NULL;  // indicate that we are no longer processing a token
 
         if (delim_loc == NULL) break;  // no more delim chars, so the remainder of the string was the final token so we are done
         input_search_string = delim_loc + 1;  // move to after the char we stopped at
@@ -196,7 +199,6 @@ static void parse_input(char* input, struct shell_command* out) {
     *out = cmd;
 }
 
-// test if `exit` command works
 static void execute_command(struct shell_command command) {
     // for testing command struct
     printf("Executing the following command:\n");
@@ -229,4 +231,6 @@ static void execute_command(struct shell_command command) {
 
     // if there was a dest_command, the pipe will have the output of the initial command, so update the dest_command's
     // args with that output then recursively call on execute_command with the new command
+
+    // test if `exit` command works
 }
