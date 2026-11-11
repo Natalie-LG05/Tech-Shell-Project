@@ -44,7 +44,7 @@ int main() // MAIN
         parse_input(input, &command);
 
         // only attempt to execute if a valid command was able to be constructed
-        // parse_input will set command.name to NULL if there was an error
+        // parse_input will set command.name to NULL if there was an error (or if input was just a blank line)
         if (command.name != NULL) execute_command(command);
 
         free(command.args);
@@ -94,7 +94,9 @@ static void parse_input(char* input, struct shell_command* out) {
             if (token == NULL) break;
 
             if (in_quotes) {
-                // input ends and is missing a closing ", so give an error or something idk yet
+                // input ends and is missing a closing ", so just do nothing and it will fall through to
+                // processing everything after the first " as one token
+                // (effectively automatically adding a closing " to the end of the line)
             }
         }
 
@@ -103,6 +105,8 @@ static void parse_input(char* input, struct shell_command* out) {
 
         char delim = '\0';
         if (delim_loc != NULL) delim = *delim_loc;  // save what character we stopped at
+
+        printf("%c\n", delim);
 
         if (delim == '\\') {
             // outside quotes, if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
