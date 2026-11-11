@@ -47,7 +47,16 @@ int main() // MAIN
         // parse_input will set command.name to NULL if there was an error (or if input was just a blank line)
         if (command.name != NULL) execute_command(command);
 
-        free(command.args);
+        // free any memory that was dynamically allocated (such as by calloc() or strdup()) to prevent memory leaks
+        free(command.name);
+        free(command.dest_filepath);
+        free(command.source_filepath);
+        if (command.args != NULL) {
+            for (int i = 0; i < command.num_args - 1; i++) {
+                free(command.args[i]);
+            }
+            free(command.args);
+        }
     }
 
     free(cur_dir);
@@ -74,8 +83,9 @@ static void parse_input(char* input, struct shell_command* out) {
     struct shell_command cmd = {};  // initialize the command to default "zero" values
 
     // copy the string to avoid changing the provided string
-    char* input_string = calloc(strlen(input) + 1, sizeof(char));
-    strcpy(input_string, input);
+    char* input_string = strdup(input);
+    // char* input_string = calloc(strlen(input) + 1, sizeof(char));
+    // strcpy(input_string, input);
 
     char* input_search_string = input_string;
 
@@ -144,14 +154,17 @@ static void parse_input(char* input, struct shell_command* out) {
             // we have found the closing " without a \ before it, so everything between the "s is the token
             in_quotes = false;  // set the parsing loop to run in normal mode again
         }
-        else if (delim == '>') {
-            // if the delim is a >, set the next token as the dest_filepath
-            last_redirect = '>';
-        }
-        else {
+        else if (delim == '>' || delim == '<' || delim == '|') {
             // redirects will always end up as delims, never standalone tokens
-            // if the delim is a <, set the next token as the source_filepath
-            // if the delim is a |, recursively call parse_input to set everything after the | as the dest_command
+            // when a redirect is spotted, set last_redirect to indicate that we must apply it
+            if (last_redirect == '\0') last_redirect = delim;
+            else {
+                // for simplicity sake, just give a syntax error when several redirects are put strangely next to each other
+                perror("Invalid redirect symbol syntax.");
+                cmd.name = NULL;  // set name to null so that the caller knows an error occurred
+                *out = cmd;
+                return;
+            }
         }
 
         // if a token isn't already set, then everything from where we started up to the delim is the token
@@ -159,18 +172,30 @@ static void parse_input(char* input, struct shell_command* out) {
         if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
 
         // process the token
-        if (strlen(token) > 0) {
+        if (strlen(token) > 0) {  // ignore empty tokens caused by putting spaces around redirects
             printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
 
             if (last_token == NULL) {
                 // if last_token is NULL, the token is the command name so set name
+                // this means that redirects must come after the command name for simplicity sake
                 // also initialize args with the name as the first value and make sure it null terminates
                 cmd.name = strdup(token);
                 cmd.args = calloc(2, sizeof(char*));
                 cmd.args[0] = strdup(token);
                 cmd.args[1] = NULL;
                 cmd.num_args += 2;
-            } else {  // handle if the token is a filename or destination command (based on previous token and delim)
+            }
+            // else if (last_redirect == '>') {
+            //     // the token comes after a >, so it is a destination file
+            //     cmd.dest_filepath = strdup(token);
+            // }
+            // else if (last_redirect == '<') {
+            //
+            // }
+            // else if (last_redirect == '|') {
+            //
+            // }
+            else {
                 // the token must be an argument to the command, so reallocate space for it
                 char** temp_args = realloc(cmd.args, sizeof(char*) * (cmd.num_args + 1));
                 if (temp_args == NULL) {
