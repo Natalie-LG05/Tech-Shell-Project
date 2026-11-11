@@ -106,8 +106,6 @@ static void parse_input(char* input, struct shell_command* out) {
         char delim = '\0';
         if (delim_loc != NULL) delim = *delim_loc;  // save what character we stopped at
 
-        printf("%c\n", delim);
-
         if (delim == '\\') {
             // outside quotes, if delim is a \, then remove the \, ignore the next char, and keep going to get the rest of the token
             // inside quotes, if delim is a \, then only escape the following char if it is a \ or ", otherwise treat the \ as a literal '\'
@@ -129,8 +127,8 @@ static void parse_input(char* input, struct shell_command* out) {
         if (delim == '"') {
             if (!in_quotes) {
                 // if we find a " in the first token or that isn't the start of a token, treat it as a literal "
-                // if the char be4 the " is \0, then this " must be the start of a token
-                if (last_token == NULL || *(delim_loc - 1) != '\0') {
+                // if the char be4 the " is a \0 or a space, then this " must be the start of a token
+                if (last_token == NULL || !(*(delim_loc - 1) == '\0' || *(delim_loc - 1) == ' ')) {
                     // store the start of this token in token
                     if (token == NULL) token = input_search_string;
                     last_delim = '"';
