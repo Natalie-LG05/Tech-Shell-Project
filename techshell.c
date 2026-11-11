@@ -45,13 +45,18 @@ int main() // MAIN
         struct shell_command command;
         parse_input(input, &command);
 
+        bool is_exit = strcmp(command.name, "exit") == 0;
+
         // only attempt to execute if a valid command was able to be constructed
         // parse_input will set command.name to NULL if there was an error (or if input was just a blank line)
+        // do not execute anything if the command is exit
         if (command.name != NULL) print_shell_command(command);
-        if (command.name != NULL) execute_command(command);
+        if (command.name != NULL && !is_exit) execute_command(command);
 
         // free any memory that was dynamically allocated (such as by calloc() or strdup()) to prevent memory leaks
         free_shell_command(&command);
+
+        if (is_exit) break;  // exit from the loop if the command was exit (ignoring any other tokens)
     }
 
     free(cur_dir);
@@ -279,30 +284,33 @@ static void print_shell_command(struct shell_command command) {
 }
 
 static void execute_command(struct shell_command command) {
-    pid_t pid = fork();
-    if (pid < 0) {
-        perror("There was an error executing fork()");
-        return;
-    }
-
-    if (pid == 0) {
-        // child process
-        execvp(command.name, command.args);
-        perror("An error occurred while executing a command");
-    } else {
-        // parent process
-        wait(NULL);  // wait for the command to finish running
-    }
-
-    // test if `exit` command works, if not then make that myself
-    // if the command name is cd, change directories instead of using execvp
-    // otherwise fork() for a child process to run execvp() in
-
     // will need file streams for source and destination files
     // may need to connect source file to the command's stdin
     // may need to connect command's stdout to destination file (if any)
     // may need to connect command's stdout to destination command's stdin
     // may need to use a pipe to do some of these
-    // command's args array should already be formatted correctly to be passed directly into execvp()
+
+    if (strcmp(command.name, "cd") == 0) {
+        // if the command name is cd, change directories to the filepath given by the first argument (very basic cd command)
+
+    }
+    else {
+        // otherwise fork() for a child process to run execvp() in
+        pid_t pid = fork();
+        if (pid < 0) {
+            perror("There was an error executing fork()");
+            return;
+        }
+
+        if (pid == 0) {
+            // child process
+            execvp(command.name, command.args);
+            perror("An error occurred while executing a command");
+        } else {
+            // parent process
+            wait(NULL);  // wait for the command to finish running
+        }
+    }
+
     // may need to recursively call execute_command on the destination command
 }
