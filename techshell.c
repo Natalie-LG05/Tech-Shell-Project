@@ -279,22 +279,30 @@ static void print_shell_command(struct shell_command command) {
 }
 
 static void execute_command(struct shell_command command) {
-    // the below comments are wrong, fix them up then begin implementation
-    // fork() for a child to run execvp() in (unless the command is 'cd')
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("There was an error executing fork()");
+        return;
+    }
 
-    // open necessary source and destination file streams
-    // if there is a source command create a pipe to redirect the initial commands stdout into
+    if (pid == 0) {
+        // child process
+        execvp(command.name, command.args);
+        perror("An error occurred while executing a command");
+    } else {
+        // parent process
+        wait(NULL);  // wait for the command to finish running
+    }
 
-    // create the args array holding the name of the command, the args to the command,
-    // file data that was redirected into the command, and NULL to terminate the array
+    // test if `exit` command works, if not then make that myself
+    // if the command name is cd, change directories instead of using execvp
+    // otherwise fork() for a child process to run execvp() in
 
-    // if the command is 'cd', manually perform it instead of using execvp()
-    // otherwise, in the child process:-
-        // if applicable, redirect stdout into the pipe or the destination file
-        // call on execvp, passing in the args array
-
-    // if there was a dest_command, the pipe will have the output of the initial command, so update the dest_command's
-    // args with that output then recursively call on execute_command with the new command
-
-    // test if `exit` command works
+    // will need file streams for source and destination files
+    // may need to connect source file to the command's stdin
+    // may need to connect command's stdout to destination file (if any)
+    // may need to connect command's stdout to destination command's stdin
+    // may need to use a pipe to do some of these
+    // command's args array should already be formatted correctly to be passed directly into execvp()
+    // may need to recursively call execute_command on the destination command
 }
