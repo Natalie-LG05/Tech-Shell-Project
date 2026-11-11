@@ -291,7 +291,6 @@ static void execute_command(struct shell_command command) {
     // may need to use a pipe to do some of these
 
     if (strcmp(command.name, "cd") == 0) {
-        printf("0");
         // if the command name is cd, change directories to the filepath given by the first argument (very basic cd command)
         char* dir_path = command.args[1] != NULL ? command.args[1] : "~";  // default to user's home directory if no argument was provided
 
@@ -299,19 +298,12 @@ static void execute_command(struct shell_command command) {
         char* home_path = getenv("HOME");
         if (strcmp(dir_path, "~") == 0) dir_path = home_path;
         else if (dir_path[0] == '~') {  // if the path starts with a ~:
-            // create a new string with the ~ replaced by the path to the home directory, reassign the pointers, then free the old string
-            printf("1");
+            // create a new string with the ~ replaced by the path to the home directory and reassign the pointers
             char* new_path = calloc(strlen(dir_path) + strlen(home_path), sizeof(char));
-            printf("2");
             strcpy(new_path, home_path);
-            printf("3");
             strcat(new_path, dir_path + 1);  // start after the first char of dir_path (which is the ~ we are replacing)
-            printf("4");
-            free(dir_path);  // free the memory used for the old string which we are done with
-            printf("5");
             dir_path = new_path;  // reassign dir_path to point to the new string
         }
-        printf("6");
         if (chdir(dir_path) != 0) {  // NOTE: this will break if the user's HOME path environment variable is not set
             // an error occurred
             perror("chdir() failed");
