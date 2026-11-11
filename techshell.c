@@ -21,6 +21,7 @@ struct shell_command {
 
 
 // Functional Prototypes
+static void free_shell_command(struct shell_command* cmd);
 static void display_prompt(char* cur_dir);
 static char* get_input();
 static void parse_input(char* input, struct shell_command* out);
@@ -48,16 +49,7 @@ int main() // MAIN
         if (command.name != NULL) execute_command(command);
 
         // free any memory that was dynamically allocated (such as by calloc() or strdup()) to prevent memory leaks
-        free(command.name);
-        free(command.dest_filepath);
-        free(command.source_filepath);
-        if (command.args != NULL) {
-            for (int i = 0; i < command.num_args - 1; i++) {
-                free(command.args[i]);
-            }
-            free(command.args);
-        }
-        // free dest_command recursively (using a loop)
+        free_shell_command(&command);
     }
 
     free(cur_dir);
@@ -66,6 +58,23 @@ int main() // MAIN
     exit(0);
 }
 
+static void free_shell_command(struct shell_command* cmd) {
+    // free the strings
+    free(cmd->name);
+    free(cmd->dest_filepath);
+    free(cmd->source_filepath);
+
+    // args is an array of strings, so free each string (which are char arrays), then free the entire array
+    if (cmd->args != NULL) {
+        for (int i = 0; i < cmd->num_args - 1; i++) {
+            free(cmd->args[i]);
+        }
+        free(cmd->args);
+    }
+
+    // recursively call to free dest_command (if there is one)
+    if (cmd->dest_command != NULL) free_shell_command(cmd->dest_command);
+}
 
 static void display_prompt(char* cur_dir) {
     printf("%s$ ", cur_dir);
