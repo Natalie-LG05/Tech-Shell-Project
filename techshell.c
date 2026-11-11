@@ -57,6 +57,7 @@ int main() // MAIN
             }
             free(command.args);
         }
+        // free dest_command recursively (using a loop)
     }
 
     free(cur_dir);
@@ -84,8 +85,6 @@ static void parse_input(char* input, struct shell_command* out) {
 
     // copy the string to avoid changing the provided string
     char* input_string = strdup(input);
-    // char* input_string = calloc(strlen(input) + 1, sizeof(char));
-    // strcpy(input_string, input);
 
     char* input_search_string = input_string;
 
@@ -164,8 +163,7 @@ static void parse_input(char* input, struct shell_command* out) {
                 // for simplicity sake, just give a syntax error when several redirects are put strangely next to each other
                 fprintf(stderr, "Error: Invalid redirect symbol syntax\n");
                 cmd.name = NULL;  // set name to null so that the caller knows an error occurred
-                *out = cmd;
-                return;
+                break;
             }
         }
 
@@ -207,7 +205,14 @@ static void parse_input(char* input, struct shell_command* out) {
                 current_redirect = '\0';
             }
             else if (last_redirect == '|' && current_redirect == '|') {
-                //
+                // everything left after the | is the destination command, so assign it and break
+                // must allocate dest_cmd on the heap so that its lifetime extends beyond that of this parse_input call
+                struct shell_command* dest_cmd = calloc(1, sizeof(struct shell_command));
+                parse_input(token, dest_cmd);  // parse everything after the | as its own command
+                if (dest_cmd -> name != NULL) cmd.dest_command = dest_cmd;
+                else cmd.name = NULL;  // set name to null so that the caller knows an error occurred
+
+                break;
             }
             else {
                 // the token must be an argument to the command, so reallocate space for it
@@ -215,8 +220,7 @@ static void parse_input(char* input, struct shell_command* out) {
                 if (temp_args == NULL) {
                     perror("There was an error reallocating memory for args");
                     cmd.name = NULL;  // set name to null so that the caller knows an error occurred
-                    *out = cmd;
-                    return;
+                    break;
                 }
 
                 // then, if the allocation was successful, add the argument
