@@ -296,10 +296,11 @@ static void execute_command(struct shell_command command) {
 
         // replace any valid `~` with the path to the user's home directory
         char* home_path = getenv("HOME");
+        char* new_path = NULL;
         if (strcmp(dir_path, "~") == 0) dir_path = home_path;
         else if (dir_path[0] == '~') {  // if the path starts with a ~:
             // create a new string with the ~ replaced by the path to the home directory and reassign the pointers
-            char* new_path = calloc(strlen(dir_path) + strlen(home_path), sizeof(char));
+            new_path = calloc(strlen(dir_path) + strlen(home_path), sizeof(char));
             strcpy(new_path, home_path);
             strcat(new_path, dir_path + 1);  // start after the first char of dir_path (which is the ~ we are replacing)
             dir_path = new_path;  // reassign dir_path to point to the new string
@@ -309,6 +310,7 @@ static void execute_command(struct shell_command command) {
             perror("chdir() failed");
             // may need to connect command's stdout to destination command's stdin
         }
+        free(new_path);
     }
     else {
         // otherwise fork() for a child process to run execvp() in
