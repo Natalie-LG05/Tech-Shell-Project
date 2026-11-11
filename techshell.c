@@ -186,11 +186,11 @@ static void parse_input(char* input, struct shell_command* out) {
                 cmd.args[cmd.num_args - 2] = strdup(token);
                 cmd.args[cmd.num_args - 1] = NULL;
             }
-
-            // update last_token
-            last_token = token;
-            token = NULL;  // indicate that we are no longer processing a token
         }
+
+        // update last_token
+        last_token = token;
+        token = NULL;  // indicate that we are no longer processing a token
 
         if (delim_loc == NULL) break;  // no more delim chars, so the remainder of the string was the final token so we are done
         input_search_string = delim_loc + 1;  // move to after the char we stopped at
