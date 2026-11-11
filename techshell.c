@@ -7,14 +7,16 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/wait.h>
 
 
 struct shell_command {
     char* name;
     char* dest_filepath;
     char* source_filepath;
+    char** args;  // first arg is the command name, and last arg must be a null terminator for execvp
+    size_t num_args;  // the number of args (including the null terminator)
     struct shell_command* dest_command;
-    char* args[];
 };
 
 
@@ -22,7 +24,7 @@ struct shell_command {
 static void display_prompt(char* cur_dir);
 static char* get_input();
 static void parse_input(char* input, struct shell_command* out);
-static void execute_command(struct shell_command* command);
+static void execute_command(struct shell_command command);
 
 
 int main() // MAIN
@@ -38,10 +40,14 @@ int main() // MAIN
 
         input = get_input();
 
-        struct shell_command command = {};
+        struct shell_command command;
         parse_input(input, &command);
 
-        execute_command(&command);
+        // only attempt to execute if a valid command was able to be constructed
+        // parse_input will set command.name to NULL if there was an error
+        if (command.name != NULL) execute_command(command);
+
+        free(command.args);
     }
 
     free(cur_dir);
@@ -138,23 +144,43 @@ static void parse_input(char* input, struct shell_command* out) {
             // we have found the closing " without a \ before it, so everything between the "s is the token
             in_quotes = false;  // set the parsing loop to run in normal mode again
         } else {
+            // redirects will always end up as delims, never standalone tokens
             // if the delim is a >, set the next token as the dest_filepath
             // if the delim is a <, set the next token as the source_filepath
             // if the delim is a |, recursively call parse_input to set everything after the | as the dest_command
-
-            // if last_token is NULL, the token is the command name so set name
-            // otherwise the token will be an arg, filename, chained command, or redirect operator
-                // if the token is a >, ignore it and set the next token as the dest_filepath
-                // if the token is a <, ignore it and set the next token as the source_filepath
-                // if the token is a |, ignore it and recursively call parse_input to set everything after the | as the dest_command
-                // otherwise the token is an arg, filename, or chained command depending on the previous token and delim
         }
 
         // if a token isn't already set, then everything from where we started up to the delim is the token
         if (token == NULL) token = input_search_string;
         if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
 
-        printf("Token: '%s' (Delim: '%c')\n", token, delim);  // process the token
+        // process the token
+        printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
+
+        if (last_token == NULL) {
+            // if last_token is NULL, the token is the command name so set name
+            // also initialize args with the name as the first value and make sure it null terminates
+            cmd.name = token;
+            cmd.args = calloc(2, sizeof(char*));
+            cmd.args[0] = token;
+            cmd.args[1] = NULL;
+            cmd.num_args += 2;
+        } else {  // handle if the token is a filename or destination command (based on previous token and delim)
+            // the token must be an argument to the command, so reallocate space for it
+            char** temp_args = realloc(cmd.args, sizeof(char*) * (cmd.num_args + 1));
+            if (temp_args == NULL) {
+                perror("There was an error reallocating memory for args.");
+                cmd.name = NULL;  // set name to null so that the caller knows an error occurred
+                *out = cmd;
+                return;
+            }
+
+            // then, if the allocation was successful, add the argument
+            cmd.args = temp_args;
+            cmd.num_args++;
+            cmd.args[cmd.num_args - 2] = token;
+            cmd.args[cmd.num_args - 1] = NULL;
+        }
 
         // update last_token and last_delim
         last_token = token;
@@ -171,7 +197,23 @@ static void parse_input(char* input, struct shell_command* out) {
 }
 
 // test if `exit` command works
-static void execute_command(struct shell_command* command) {
+static void execute_command(struct shell_command command) {
+    // for testing command struct
+    printf("Executing the following command:\n");
+    printf("Name: %s\n", command.name);
+    printf("Destination Filepath: %s\n", command.dest_filepath);
+    printf("Source Filepath: %s\n", command.source_filepath);
+    printf("Arguments: ");
+    int i = 0;
+    while (command.args[i] != NULL) printf("%s", command.args[i]);
+    printf("\n");
+    if (command.dest_command == NULL) printf("Destination Command: None\n");
+    else {
+        printf("Destination Command:\n");
+        execute_command(*command.dest_command);
+    }
+
+    // the below comments are wrong, fix them up then begin implementation
     // fork() for a child to run execvp() in (unless the command is 'cd')
 
     // open necessary source and destination file streams
