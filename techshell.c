@@ -279,7 +279,7 @@ static void print_shell_command(struct shell_command command) {
 }
 
 static void execute_command(struct shell_command command) {
-        // the below comments are wrong, fix them up then begin implementation
+    // the below comments are wrong, fix them up then begin implementation
     // fork() for a child to run execvp() in (unless the command is 'cd')
 
     // open necessary source and destination file streams
