@@ -42,15 +42,12 @@ int main() // MAIN
 
         struct shell_command command;
         parse_input(input, &command);
-        printf("Parsed a command!");
 
         // only attempt to execute if a valid command was able to be constructed
         // parse_input will set command.name to NULL if there was an error
         if (command.name != NULL) execute_command(command);
-        printf("Awaiting next command 1!");
 
         free(command.args);
-        printf("Awaiting next command 2!");
     }
 
     free(cur_dir);
@@ -207,7 +204,10 @@ static void execute_command(struct shell_command command) {
     printf("Source Filepath: %s\n", command.source_filepath);
     printf("Arguments: ");
     int i = 0;
-    while (command.args[i] != NULL) printf("%s", command.args[i]);
+    while (command.args[i] != NULL) {
+        printf("%s, ", command.args[i]);
+        i++;
+    }
     printf("\n");
     if (command.dest_command == NULL) printf("Destination Command: None\n");
     else {
