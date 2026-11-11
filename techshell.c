@@ -291,6 +291,7 @@ static void execute_command(struct shell_command command) {
     // may need to use a pipe to do some of these
 
     if (strcmp(command.name, "cd") == 0) {
+        printf("0");
         // if the command name is cd, change directories to the filepath given by the first argument (very basic cd command)
         char* dir_path = command.args[1] != NULL ? command.args[1] : "~";  // default to user's home directory if no argument was provided
 
