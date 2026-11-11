@@ -25,6 +25,7 @@ static void free_shell_command(struct shell_command* cmd);
 static void display_prompt(char* cur_dir);
 static char* get_input();
 static void parse_input(char* input, struct shell_command* out);
+static void print_shell_command(struct shell_command command);
 static void execute_command(struct shell_command command);
 
 
@@ -46,6 +47,7 @@ int main() // MAIN
 
         // only attempt to execute if a valid command was able to be constructed
         // parse_input will set command.name to NULL if there was an error (or if input was just a blank line)
+        if (command.name != NULL) print_shell_command(command);
         if (command.name != NULL) execute_command(command);
 
         // free any memory that was dynamically allocated (such as by calloc() or strdup()) to prevent memory leaks
@@ -256,7 +258,7 @@ static void parse_input(char* input, struct shell_command* out) {
     *out = cmd;
 }
 
-static void execute_command(struct shell_command command) {
+static void print_shell_command(struct shell_command command) {
     // for testing command struct
     printf("Executing the following command:\n");
     printf("\tName: %s\n", command.name);
@@ -274,8 +276,10 @@ static void execute_command(struct shell_command command) {
         printf("\tDestination Command:\n");
         execute_command(*command.dest_command);
     }
+}
 
-    // the below comments are wrong, fix them up then begin implementation
+static void execute_command(struct shell_command command) {
+        // the below comments are wrong, fix them up then begin implementation
     // fork() for a child to run execvp() in (unless the command is 'cd')
 
     // open necessary source and destination file streams
