@@ -311,7 +311,7 @@ static void execute_command(struct shell_command command) {
             printf("5");
             dir_path = new_path;  // reassign dir_path to point to the new string
         }
-
+        printf("6");
         if (chdir(dir_path) != 0) {  // NOTE: this will break if the user's HOME path environment variable is not set
             // an error occurred
             perror("chdir() failed");
