@@ -185,7 +185,7 @@ static void parse_input(char* input, struct shell_command* out) {
 
         // process the token
         if (strlen(token) > 0) {  // ignore empty tokens caused by putting spaces around redirects
-            printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
+            // printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
 
             if (last_token == NULL) {
                 // if last_token is NULL, the token is the command name so set name
