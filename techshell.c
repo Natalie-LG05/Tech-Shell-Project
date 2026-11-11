@@ -299,10 +299,15 @@ static void execute_command(struct shell_command command) {
         if (strcmp(dir_path, "~") == 0) dir_path = home_path;
         else if (dir_path[0] == '~') {  // if the path starts with a ~:
             // create a new string with the ~ replaced by the path to the home directory, reassign the pointers, then free the old string
+            printf("1");
             char* new_path = calloc(strlen(dir_path) + strlen(home_path), sizeof(char));
+            printf("2");
             strcpy(new_path, home_path);
+            printf("3");
             strcat(new_path, dir_path + 1);  // start after the first char of dir_path (which is the ~ we are replacing)
+            printf("4");
             free(dir_path);  // free the memory used for the old string which we are done with
+            printf("5");
             dir_path = new_path;  // reassign dir_path to point to the new string
         }
 
