@@ -199,19 +199,19 @@ static void parse_input(char* input, struct shell_command* out) {
 static void execute_command(struct shell_command command) {
     // for testing command struct
     printf("Executing the following command:\n");
-    printf("Name: %s\n", command.name);
-    printf("Destination Filepath: %s\n", command.dest_filepath);
-    printf("Source Filepath: %s\n", command.source_filepath);
-    printf("Arguments: ");
+    printf("\tName: %s\n", command.name);
+    printf("\tDestination Filepath: %s\n", command.dest_filepath);
+    printf("\tSource Filepath: %s\n", command.source_filepath);
+    printf("\tArguments: ");
     int i = 0;
     while (command.args[i] != NULL) {
         printf("%s, ", command.args[i]);
         i++;
     }
     printf("\n");
-    if (command.dest_command == NULL) printf("Destination Command: None\n");
+    if (command.dest_command == NULL) printf("\tDestination Command: None\n");
     else {
-        printf("Destination Command:\n");
+        printf("\tDestination Command:\n");
         execute_command(*command.dest_command);
     }
 
