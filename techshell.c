@@ -162,7 +162,7 @@ static void parse_input(char* input, struct shell_command* out) {
             if (current_redirect == '\0') current_redirect = delim;
             else {
                 // for simplicity sake, just give a syntax error when several redirects are put strangely next to each other
-                fprintf(stderr, "Invalid redirect symbol syntax\n");
+                fprintf(stderr, "Error: Invalid redirect symbol syntax\n");
                 cmd.name = NULL;  // set name to null so that the caller knows an error occurred
                 *out = cmd;
                 return;
