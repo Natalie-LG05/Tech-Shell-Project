@@ -171,16 +171,16 @@ static void parse_input(char* input, struct shell_command* out) {
 
         // if a token isn't already set, then everything from where we started up to the delim is the token
         if (token == NULL) token = input_search_string;
-        if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
 
         // process the token
         if (strlen(token) > 0) {  // ignore empty tokens caused by putting spaces around redirects
-            printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
-
             if (last_token == NULL) {
                 // if last_token is NULL, the token is the command name so set name
                 // this means that redirects must come after the command name for simplicity sake
                 // also initialize args with the name as the first value and make sure it null terminates
+                if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
+                printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
+
                 cmd.name = strdup(token);
                 cmd.args = calloc(2, sizeof(char*));
                 cmd.args[0] = strdup(token);
@@ -188,6 +188,9 @@ static void parse_input(char* input, struct shell_command* out) {
                 cmd.num_args += 2;
             }
             else if (last_redirect == '>' && current_redirect == '>') {
+                if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
+                printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
+
                 // the token comes after a >, so it is a destination file
                 cmd.dest_filepath = strdup(token);
 
@@ -196,6 +199,9 @@ static void parse_input(char* input, struct shell_command* out) {
                 current_redirect = '\0';
             }
             else if (last_redirect == '<' && current_redirect == '<') {
+                if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
+                printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
+
                 // the token comes after a <, so it is a source file
                 cmd.source_filepath = strdup(token);
 
@@ -204,9 +210,12 @@ static void parse_input(char* input, struct shell_command* out) {
                 current_redirect = '\0';
             }
             else if (last_redirect == '|' && current_redirect == '|') {
-
+                //
             }
             else {
+                if (delim_loc != NULL) *delim_loc = '\0';  // change the delim to a null terminator to make accessing the token simple
+                printf("Token: '%s' (Delim: '%c')\n", token, delim);  // print for testing
+
                 // the token must be an argument to the command, so reallocate space for it
                 char** temp_args = realloc(cmd.args, sizeof(char*) * (cmd.num_args + 1));
                 if (temp_args == NULL) {
