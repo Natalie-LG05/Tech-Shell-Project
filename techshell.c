@@ -160,9 +160,9 @@ static void parse_input(char* input, struct shell_command* out) {
         if (last_token == NULL) {
             // if last_token is NULL, the token is the command name so set name
             // also initialize args with the name as the first value and make sure it null terminates
-            cmd.name = token;
+            cmd.name = strdup(token);
             cmd.args = calloc(2, sizeof(char*));
-            cmd.args[0] = token;
+            cmd.args[0] = strdup(token);
             cmd.args[1] = NULL;
             cmd.num_args += 2;
         } else {  // handle if the token is a filename or destination command (based on previous token and delim)
@@ -178,7 +178,7 @@ static void parse_input(char* input, struct shell_command* out) {
             // then, if the allocation was successful, add the argument
             cmd.args = temp_args;
             cmd.num_args++;
-            cmd.args[cmd.num_args - 2] = token;
+            cmd.args[cmd.num_args - 2] = strdup(token);
             cmd.args[cmd.num_args - 1] = NULL;
         }
 
