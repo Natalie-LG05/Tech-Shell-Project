@@ -265,7 +265,7 @@ static void parse_input(char* input, struct shell_command* out) {
 
 static void print_shell_command(struct shell_command command) {
     // for testing command struct
-    printf("Executing the following command:\n");
+    printf("The provided input was parsed as the following command:\n");
     printf("\tName: %s\n", command.name);
     printf("\tDestination Filepath: %s\n", command.dest_filepath);
     printf("\tSource Filepath: %s\n", command.source_filepath);
