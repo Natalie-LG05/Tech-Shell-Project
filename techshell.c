@@ -55,7 +55,7 @@ int main() // MAIN
         if (command.name != NULL && !is_exit) execute_command(command, STDIN_FILENO);
 
         // free any memory that was dynamically allocated (such as by calloc() or strdup()) to prevent memory leaks
-        free_shell_command(&command);
+        // free_shell_command(&command);
 
         if (is_exit) break;  // exit from the loop if the command was exit (ignoring any other tokens)
     }
