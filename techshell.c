@@ -57,11 +57,11 @@ int main() // MAIN
         // free any memory that was dynamically allocated (such as by calloc() or strdup()) to prevent memory leaks
         free_shell_command(&command);
 
+        free(cur_dir);
+        free(input);
+
         if (is_exit) break;  // exit from the loop if the command was exit (ignoring any other tokens)
     }
-
-    free(cur_dir);
-    free(input);
 
     exit(0);
 }
