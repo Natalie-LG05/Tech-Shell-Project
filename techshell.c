@@ -303,7 +303,7 @@ static void execute_command(struct shell_command command, int src_cmd_pipe_rd_fd
         }
 
         if (chdir(dir_path) != 0) {  // NOTE: this will break if the user's HOME path environment variable is not set
-            // an error occurred, so print a custom error message based on what the error was (may not cover all possible errors)
+            // an error occurred, so print a custom error message based on what the error was
             int error = errno;
             switch (error) {
                 case ENOENT:
@@ -401,7 +401,13 @@ static void execute_command(struct shell_command command, int src_cmd_pipe_rd_fd
         }
 
         execvp(command.name, command.args);
-        perror("An error occurred while executing a command");
+
+        // will only reach this point if execvp() fails
+        // an error occurred, so print a custom error message based on what the error was
+        int error = errno;
+        if (error == ENOENT) fprintf(stderr, "Error 2 (No such file or directory)\n");
+        else perror("An error occurred while executing a command");
+
         exit(EXIT_FAILURE);  // look up if I need to worry about freeing things
     }
 
