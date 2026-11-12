@@ -27,7 +27,7 @@ static void display_prompt(char* cur_dir);
 static char* get_input();
 static void parse_input(char* input, struct shell_command* out);
 static void print_shell_command(struct shell_command command);
-static void execute_command(struct shell_command command);
+static void execute_command(struct shell_command command, int src_cmd_pipe_rd_fd);
 
 
 int main() // MAIN
@@ -52,7 +52,7 @@ int main() // MAIN
         // parse_input will set command.name to NULL if there was an error (or if input was just a blank line)
         // do not execute anything if the command is exit
         // if (command.name != NULL) print_shell_command(command);  // debugging line
-        if (command.name != NULL && !is_exit) execute_command(command);
+        if (command.name != NULL && !is_exit) execute_command(command, STDIN_FILENO);
 
         // free any memory that was dynamically allocated (such as by calloc() or strdup()) to prevent memory leaks
         free_shell_command(&command);
@@ -284,7 +284,7 @@ static void print_shell_command(struct shell_command command) {
     }
 }
 
-static void execute_command(struct shell_command command) {
+static void execute_command(struct shell_command command, int src_cmd_pipe_rd_fd) {
     if (strcmp(command.name, "cd") == 0) {
         // if the command name is cd, change directories to the filepath given by the first argument (very basic cd command)
         char* dir_path = command.args[1] != NULL ? command.args[1] : "~";  // default to user's home directory if no argument was provided
@@ -300,60 +300,102 @@ static void execute_command(struct shell_command command) {
             strcat(new_path, dir_path + 1);  // start after the first char of dir_path (which is the ~ we are replacing)
             dir_path = new_path;  // reassign dir_path to point to the new string
         }
+
         if (chdir(dir_path) != 0) {  // NOTE: this will break if the user's HOME path environment variable is not set
             // an error occurred
             perror("chdir() failed");
-            // may need to connect command's stdout to destination command's stdin
         }
         free(new_path);
+
+        // may need to connect command's stdout to destination command's stdin
+        if (src_cmd_pipe_rd_fd != STDIN_FILENO) close(src_cmd_pipe_rd_fd);
+
+        // since this basic cd doesn't output anything, if it is piped into something just call the dest_command
+        // passing in a pipe that is never written to
+        if (command.dest_command != NULL) {
+            int pipe_fd[2];
+            if (pipe(pipe_fd) == -1) {
+                perror("The pipe() call failed");
+                return;
+            }
+            close(pipe_fd[1]);  // we don't need the write end
+            execute_command(*command.dest_command, pipe_fd[0]);
+        }
+        return;
     }
-    else {
-        // otherwise fork() for a child process to run execvp() in
-        pid_t pid = fork();
-        if (pid < 0) {
-            perror("There was an error executing fork()");
+
+    // otherwise fork() for a child process to run execvp() in
+    // if there is a destination command, create the pipe we will use to link the stdout of this
+    // command to the stdin of the destination command
+    bool has_dest_cmd = command.dest_command != NULL;
+    int pipe_fd[2];
+    if (has_dest_cmd) {
+        if (pipe(pipe_fd) == -1) {
+            perror("The pipe() call failed");
             return;
         }
-
-
-
-        if (pid == 0) {
-            // child process
-            if (command.source_filepath != NULL) {
-                // if there is a source file, open it and connect it to the stdin of this command
-                int source_fd = open(command.source_filepath, O_RDONLY);
-                if (source_fd == -1) {
-                    perror("Error opening source file");
-                    exit(EXIT_FAILURE);
-                }
-
-                dup2(source_fd, STDIN_FILENO);  // does not check if dup2 failed even though it should to be safe
-                close(source_fd);
-            }
-
-            if (command.dest_filepath != NULL) {
-                // if there is a destination file, open it (or create it if necessary), erase it, and connect this command's stdout to it
-                int dest_fd = open(command.dest_filepath, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-                if (dest_fd == -1) {
-                    perror("Error opening destination file");
-                    exit(EXIT_FAILURE);
-                }
-
-                dup2(dest_fd, STDOUT_FILENO);
-                close(dest_fd);
-            }
-
-            // may need to connect command's stdout to destination command's stdin
-            // may need to use a pipe for this
-
-            execvp(command.name, command.args);
-            perror("An error occurred while executing a command");
-            exit(EXIT_FAILURE);
-        } else {
-            // parent process
-            wait(NULL);  // wait for the command to finish running
-        }
     }
 
-    // may need to recursively call execute_command on the destination command
+    // create the child process
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("There was an error executing fork()");
+        return;
+    }
+
+    if (pid == 0) {
+        // child process
+        if (src_cmd_pipe_rd_fd != STDIN_FILENO) {
+            // the output of a previous command was piped into this command
+            // so redirect the data from that pipe into this command's stdin
+            dup2(src_cmd_pipe_rd_fd, STDIN_FILENO);
+            close(src_cmd_pipe_rd_fd);  // close the read end of the pipe now that we are done with it
+        }
+
+        // a < should override a | if both are present for a command
+        if (command.source_filepath != NULL) {
+            // if there is a source file, open it and connect it to the stdin of this command
+            int source_fd = open(command.source_filepath, O_RDONLY);
+            if (source_fd == -1) {
+                perror("Error opening source file");
+                exit(EXIT_FAILURE);
+            }
+
+            dup2(source_fd, STDIN_FILENO);  // does not check if dup2 failed even though it should to be safe
+            close(source_fd);
+        }
+
+        if (has_dest_cmd) {
+            // if there is a dest_command, redirect this command's stdout into the pipe
+            close(pipe_fd[0]);  // child does not need to read from the pipe
+            dup2(pipe_fd[1], STDOUT_FILENO);
+            close(pipe_fd[1]);
+        }
+
+        // a > should override a | if both are present for a command
+        if (command.dest_filepath != NULL) {
+            // if there is a destination file, open it (or create it if necessary), erase it, and connect this command's stdout to it
+            int dest_fd = open(command.dest_filepath, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+            if (dest_fd == -1) {
+                perror("Error opening destination file");
+                exit(EXIT_FAILURE);
+            }
+
+            dup2(dest_fd, STDOUT_FILENO);
+            close(dest_fd);
+        }
+
+        execvp(command.name, command.args);
+        perror("An error occurred while executing a command");
+        exit(EXIT_FAILURE);  // look up if I need to worry about freeing things
+    }
+
+    // if there is a destination command, call execute_command on it (giving it the read end of the pipe)
+    if (has_dest_cmd) {
+        close(pipe_fd[1]);  // parent does not need to write to the pipe
+        execute_command(*command.dest_command, pipe_fd[0]);
+    }
+
+    // parent process
+    wait(NULL);  // wait for the command to finish running
 }
