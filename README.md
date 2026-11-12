@@ -10,4 +10,3 @@ runs the command provided
 To use this in a unix-like environment, simply clone the repo 
 (git clone {url}), compile the c file (gcc techshell.c -o techshell), then
 run the outputted executable (./techshell)  
-
