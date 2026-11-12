@@ -405,8 +405,17 @@ static void execute_command(struct shell_command command, int src_cmd_pipe_rd_fd
         // will only reach this point if execvp() fails
         // an error occurred, so print a custom error message based on what the error was
         int error = errno;
-        if (error == ENOENT) fprintf(stderr, "Error 2 (No such file or directory)\n");
-        else perror("An error occurred while executing a command");
+        switch (error) {
+            case ENOENT:
+                fprintf(stderr, "Error 2 (No such file or directory)\n");
+                break;
+            case EACCES:
+                fprintf(stderr, "Error 13 (Permission denied)\n");
+                break;
+            default:
+                perror("An error occurred while executing a command");
+                break;
+        }
 
         exit(EXIT_FAILURE);  // look up if I need to worry about freeing things
     }
