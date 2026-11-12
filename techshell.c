@@ -43,10 +43,10 @@ int main() // MAIN
 
         input = get_input();
 
-        struct shell_command command = {};
+        struct shell_command command;
         parse_input(input, &command);
 
-        bool is_exit = strcmp(command.name, "exit") == 0;
+        bool is_exit = command.name != NULL && strcmp(command.name, "exit") == 0;
 
         // only attempt to execute if a valid command was able to be constructed
         // parse_input will set command.name to NULL if there was an error (or if input was just a blank line)
@@ -55,7 +55,7 @@ int main() // MAIN
         if (command.name != NULL && !is_exit) execute_command(command, STDIN_FILENO);
 
         // free any memory that was dynamically allocated (such as by calloc() or strdup()) to prevent memory leaks
-        // free_shell_command(&command);
+        free_shell_command(&command);
 
         if (is_exit) break;  // exit from the loop if the command was exit (ignoring any other tokens)
     }
