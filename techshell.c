@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 
 
 struct shell_command {
@@ -284,12 +285,6 @@ static void print_shell_command(struct shell_command command) {
 }
 
 static void execute_command(struct shell_command command) {
-    // will need file streams for source and destination files
-    // may need to connect source file to the command's stdin
-    // may need to connect command's stdout to destination file (if any)
-    // may need to connect command's stdout to destination command's stdin
-    // may need to use a pipe to do some of these
-
     if (strcmp(command.name, "cd") == 0) {
         // if the command name is cd, change directories to the filepath given by the first argument (very basic cd command)
         char* dir_path = command.args[1] != NULL ? command.args[1] : "~";  // default to user's home directory if no argument was provided
@@ -320,8 +315,37 @@ static void execute_command(struct shell_command command) {
             return;
         }
 
+
+
         if (pid == 0) {
             // child process
+            if (command.source_filepath != NULL) {
+                // if there is a source file, open it and connect it to the stdin of this command
+                int source_fd = open(command.source_filepath, O_RDONLY);
+                if (source_fd == -1) {
+                    perror("Error opening source file");
+                    return;
+                }
+
+                dup2(source_fd, STDIN_FILENO);  // does not check if dup2 failed even though it should to be safe
+                close(source_fd);
+            }
+
+            if (command.dest_filepath != NULL) {
+                // if there is a destination file, open it (or create it if necessary), erase it, and connect this command's stdout to it
+                int dest_fd = open(command.dest_filepath, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                if (dest_fd == -1) {
+                    perror("Error opening destination file");
+                    return;
+                }
+
+                dup2(dest_fd, STDOUT_FILENO);
+                close(dest_fd);
+            }
+
+            // may need to connect command's stdout to destination command's stdin
+            // may need to use a pipe for this
+
             execvp(command.name, command.args);
             perror("An error occurred while executing a command");
         } else {
