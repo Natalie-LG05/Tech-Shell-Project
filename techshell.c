@@ -45,6 +45,7 @@ int main() // MAIN
 
         struct shell_command command;
         parse_input(input, &command);
+        printf("hello");
 
         bool is_exit = strcmp(command.name, "exit") == 0;
 
