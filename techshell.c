@@ -43,7 +43,7 @@ int main() // MAIN
 
         input = get_input();
 
-        struct shell_command command;
+        struct shell_command command = {};
         parse_input(input, &command);
 
         bool is_exit = strcmp(command.name, "exit") == 0;
