@@ -9,6 +9,7 @@
 #include <stdbool.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <errno.h>
 
 
 struct shell_command {
@@ -302,8 +303,22 @@ static void execute_command(struct shell_command command, int src_cmd_pipe_rd_fd
         }
 
         if (chdir(dir_path) != 0) {  // NOTE: this will break if the user's HOME path environment variable is not set
-            // an error occurred
-            perror("chdir() failed");
+            // an error occurred, so print a custom error message based on what the error was (may not cover all possible errors)
+            int error = errno;
+            switch (error) {
+                case ENOENT:
+                    fprintf(stderr, "Error 2 (No such file or directory)\n");
+                    break;
+                case EACCES:
+                    fprintf(stderr, "Error 13 (Permission denied)\n");
+                    break;
+                case ENOTDIR:
+                    fprintf(stderr, "Error 20 (Not a directory)\n");
+                    break;
+                default:
+                    perror("chdir() failed");
+                    break;
+            }
         }
         free(new_path);
 
