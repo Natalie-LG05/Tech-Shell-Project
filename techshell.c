@@ -372,7 +372,9 @@ static void execute_command(struct shell_command command, int src_cmd_pipe_rd_fd
             // if there is a source file, open it and connect it to the stdin of this command
             int source_fd = open(command.source_filepath, O_RDONLY);
             if (source_fd == -1) {
-                perror("Error opening source file");
+                int error = errno;
+                if (error == ENOENT) fprintf(stderr, "Error 2 (No such file or directory)\n");
+                else perror("Error opening source file");
                 exit(EXIT_FAILURE);
             }
 
@@ -392,7 +394,18 @@ static void execute_command(struct shell_command command, int src_cmd_pipe_rd_fd
             // if there is a destination file, open it (or create it if necessary), erase it, and connect this command's stdout to it
             int dest_fd = open(command.dest_filepath, O_WRONLY | O_CREAT | O_TRUNC, 0666);
             if (dest_fd == -1) {
-                perror("Error opening destination file");
+                int error = errno;
+                switch (error) {
+                    case ENOENT:
+                        fprintf(stderr, "Error 2 (No such file or directory)\n");
+                        break;
+                    case EACCES:
+                        fprintf(stderr, "Error 13 (Permission denied)\n");
+                        break;
+                    default:
+                        perror("Error opening destination file");
+                        break;
+                }
                 exit(EXIT_FAILURE);
             }
 
