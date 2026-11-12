@@ -324,7 +324,7 @@ static void execute_command(struct shell_command command) {
                 int source_fd = open(command.source_filepath, O_RDONLY);
                 if (source_fd == -1) {
                     perror("Error opening source file");
-                    return;
+                    exit(EXIT_FAILURE);
                 }
 
                 dup2(source_fd, STDIN_FILENO);  // does not check if dup2 failed even though it should to be safe
@@ -336,7 +336,7 @@ static void execute_command(struct shell_command command) {
                 int dest_fd = open(command.dest_filepath, O_WRONLY | O_CREAT | O_TRUNC, 0666);
                 if (dest_fd == -1) {
                     perror("Error opening destination file");
-                    return;
+                    exit(EXIT_FAILURE);
                 }
 
                 dup2(dest_fd, STDOUT_FILENO);
@@ -348,6 +348,7 @@ static void execute_command(struct shell_command command) {
 
             execvp(command.name, command.args);
             perror("An error occurred while executing a command");
+            exit(EXIT_FAILURE);
         } else {
             // parent process
             wait(NULL);  // wait for the command to finish running
